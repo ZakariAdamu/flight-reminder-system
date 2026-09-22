@@ -117,3 +117,4 @@ To be updated after Git setup.
 ## Next Milestone
 
 Milestone 2 — Docker and PostgreSQL foundation.
+Milestone 3 — Database schema

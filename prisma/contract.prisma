@@ -1,0 +1,103 @@
+// use prisma-8
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum AuditEventType {
+  TRAVELLER_CREATED
+  TRAVELLER_UPDATED
+  FLIGHT_CREATED
+  FLIGHT_UPDATED
+  REMINDER_CREATED
+  REMINDER_DUE
+  ADMIN_ADVANCE_NOTIFICATION_SENT
+  TRAVELLER_REMINDER_SENT
+  ADMIN_CONFIRMATION_SENT
+  REMINDER_FAILED
+  REMINDER_RETRY_SCHEDULED
+  REMINDER_CANCELLED
+}
+
+model Traveller {
+  id        String               @id @default(uuid())
+  sheetRow  Int                  @unique
+  name      String
+  location  String?
+  email     String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt temporal.updatedAt()
+
+  flights   Flight[]
+  auditLogs AuditLog[]
+}
+
+model Flight {
+  id              String               @id @default(uuid())
+  travellerId     String
+
+  origin          String
+  destination     String
+
+  departureAt     DateTime
+  arrivalAt       DateTime?
+
+  layoverCity     String?
+  layoverBeginsAt DateTime?
+  layoverEndsAt   DateTime?
+  layoverDuration String?
+
+  sheetRow        Int                  @unique
+
+  createdAt       DateTime             @default(now())
+  updatedAt       temporal.updatedAt()
+
+  traveller       Traveller            @relation(fields:[travellerId], references:[id], onDelete: Cascade)
+  reminder        Reminder?
+}
+
+model Reminder {
+  id                String               @id @default(uuid())
+  reminderId        String               @unique
+
+  flightId          String               @unique
+
+  scheduledFor      DateTime
+  status            ReminderStatus       @default(PENDING)
+
+  attemptCount      Int                  @default(0)
+  sentAt            DateTime?
+  failedAt          DateTime?
+  nextAttemptAt     DateTime?
+  errorMessage      String?
+  providerMessageId String?
+
+  createdAt         DateTime             @default(now())
+  updatedAt         temporal.updatedAt()
+
+  flight            Flight               @relation(fields:[flightId], references:[id], onDelete: Cascade)
+  auditLogs         AuditLog[]
+}
+
+model AuditLog {
+  id          String         @id @default(uuid())
+  travellerId String?
+  reminderId  String?
+
+  eventType   AuditEventType
+  message     String
+  metadata    String?
+
+  createdAt   DateTime       @default(now())
+
+  traveller   Traveller?     @relation(fields:[travellerId], references:[id], onDelete: SetNull)
+  reminder    Reminder?      @relation(fields:[reminderId], references:[id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([eventType])
+  @@index([travellerId])
+  @@index([reminderId])
+}

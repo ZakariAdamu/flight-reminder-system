@@ -1,0 +1,748 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.auditLog",
+    "label": "Create table \"auditLog\"",
+    "summary": "Creates table \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"auditLog\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"auditLog\"",
+        "sql": "CREATE TABLE \"public\".\"auditLog\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"eventType\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"message\" text NOT NULL,\n  \"metadata\" text,\n  \"reminderId\" text,\n  \"travellerId\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"auditLog_eventType_check_48274968\" CHECK (\"eventType\" IN ('TRAVELLER_CREATED', 'TRAVELLER_UPDATED', 'FLIGHT_CREATED', 'FLIGHT_UPDATED', 'REMINDER_CREATED', 'REMINDER_DUE', 'ADMIN_ADVANCE_NOTIFICATION_SENT', 'TRAVELLER_REMINDER_SENT', 'ADMIN_CONFIRMATION_SENT', 'REMINDER_FAILED', 'REMINDER_RETRY_SCHEDULED', 'REMINDER_CANCELLED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"auditLog\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.flight",
+    "label": "Create table \"flight\"",
+    "summary": "Creates table \"flight\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "flight"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"flight\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"flight\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"flight\"",
+        "sql": "CREATE TABLE \"public\".\"flight\" (\n  \"arrivalAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"departureAt\" timestamptz NOT NULL,\n  \"destination\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"layoverBeginsAt\" timestamptz,\n  \"layoverCity\" text,\n  \"layoverDuration\" text,\n  \"layoverEndsAt\" timestamptz,\n  \"origin\" text NOT NULL,\n  \"sheetRow\" int4 NOT NULL,\n  \"travellerId\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"flight\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"flight\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.reminder",
+    "label": "Create table \"reminder\"",
+    "summary": "Creates table \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"reminder\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"reminder\"",
+        "sql": "CREATE TABLE \"public\".\"reminder\" (\n  \"attemptCount\" int4 DEFAULT 0 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"errorMessage\" text,\n  \"failedAt\" timestamptz,\n  \"flightId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"nextAttemptAt\" timestamptz,\n  \"providerMessageId\" text,\n  \"reminderId\" text NOT NULL,\n  \"scheduledFor\" timestamptz NOT NULL,\n  \"sentAt\" timestamptz,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"reminder_status_check_03803961\" CHECK (\"status\" IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"reminder\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.traveller",
+    "label": "Create table \"traveller\"",
+    "summary": "Creates table \"traveller\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "traveller"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"traveller\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"traveller\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"traveller\"",
+        "sql": "CREATE TABLE \"public\".\"traveller\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"location\" text,\n  \"name\" text NOT NULL,\n  \"sheetRow\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"traveller\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"traveller\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.flight.flight_sheetRow_key",
+    "label": "Add unique constraint on \"flight\" (sheetRow)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "flight_sheetRow_key",
+        "table": "flight"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"flight_sheetRow_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "flight_sheetRow_key",
+          "public",
+          "\"public\".\"flight\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"flight_sheetRow_key\"",
+        "sql": "ALTER TABLE \"public\".\"flight\" ADD CONSTRAINT \"flight_sheetRow_key\" UNIQUE (\"sheetRow\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"flight_sheetRow_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "flight_sheetRow_key",
+          "public",
+          "\"public\".\"flight\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.reminder.reminder_reminderId_key",
+    "label": "Add unique constraint on \"reminder\" (reminderId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "reminder_reminderId_key",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_reminderId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_reminderId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"reminder_reminderId_key\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD CONSTRAINT \"reminder_reminderId_key\" UNIQUE (\"reminderId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_reminderId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_reminderId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.reminder.reminder_flightId_key",
+    "label": "Add unique constraint on \"reminder\" (flightId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "reminder_flightId_key",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_flightId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"reminder_flightId_key\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD CONSTRAINT \"reminder_flightId_key\" UNIQUE (\"flightId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_flightId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.traveller.traveller_sheetRow_key",
+    "label": "Add unique constraint on \"traveller\" (sheetRow)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "traveller_sheetRow_key",
+        "table": "traveller"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"traveller_sheetRow_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_sheetRow_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"traveller_sheetRow_key\"",
+        "sql": "ALTER TABLE \"public\".\"traveller\" ADD CONSTRAINT \"traveller_sheetRow_key\" UNIQUE (\"sheetRow\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"traveller_sheetRow_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_sheetRow_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.traveller.traveller_email_key",
+    "label": "Add unique constraint on \"traveller\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "traveller_email_key",
+        "table": "traveller"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"traveller_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_email_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"traveller_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"traveller\" ADD CONSTRAINT \"traveller_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"traveller_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_email_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditLog.auditLog_createdAt_idx_9575dbd7",
+    "label": "Create index \"auditLog_createdAt_idx_9575dbd7\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditLog_createdAt_idx_9575dbd7",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditLog_createdAt_idx_9575dbd7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_createdAt_idx_9575dbd7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditLog_createdAt_idx_9575dbd7\"",
+        "sql": "CREATE INDEX \"auditLog_createdAt_idx_9575dbd7\" ON \"public\".\"auditLog\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditLog_createdAt_idx_9575dbd7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_createdAt_idx_9575dbd7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditLog.auditLog_eventType_idx_e4cf7742",
+    "label": "Create index \"auditLog_eventType_idx_e4cf7742\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditLog_eventType_idx_e4cf7742",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditLog_eventType_idx_e4cf7742\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_eventType_idx_e4cf7742\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditLog_eventType_idx_e4cf7742\"",
+        "sql": "CREATE INDEX \"auditLog_eventType_idx_e4cf7742\" ON \"public\".\"auditLog\" (\"eventType\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditLog_eventType_idx_e4cf7742\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_eventType_idx_e4cf7742\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditLog.auditLog_reminderId_idx_273293f9",
+    "label": "Create index \"auditLog_reminderId_idx_273293f9\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditLog_reminderId_idx_273293f9",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditLog_reminderId_idx_273293f9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_reminderId_idx_273293f9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditLog_reminderId_idx_273293f9\"",
+        "sql": "CREATE INDEX \"auditLog_reminderId_idx_273293f9\" ON \"public\".\"auditLog\" (\"reminderId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditLog_reminderId_idx_273293f9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_reminderId_idx_273293f9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.auditLog.auditLog_travellerId_idx_6409e652",
+    "label": "Create index \"auditLog_travellerId_idx_6409e652\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "auditLog_travellerId_idx_6409e652",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"auditLog_travellerId_idx_6409e652\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_travellerId_idx_6409e652\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"auditLog_travellerId_idx_6409e652\"",
+        "sql": "CREATE INDEX \"auditLog_travellerId_idx_6409e652\" ON \"public\".\"auditLog\" (\"travellerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"auditLog_travellerId_idx_6409e652\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"auditLog_travellerId_idx_6409e652\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.flight.flight_travellerId_idx_6409e652",
+    "label": "Create index \"flight_travellerId_idx_6409e652\" on \"flight\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "flight_travellerId_idx_6409e652",
+        "table": "flight"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"flight_travellerId_idx_6409e652\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"flight_travellerId_idx_6409e652\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"flight_travellerId_idx_6409e652\"",
+        "sql": "CREATE INDEX \"flight_travellerId_idx_6409e652\" ON \"public\".\"flight\" (\"travellerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"flight_travellerId_idx_6409e652\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"flight_travellerId_idx_6409e652\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.auditLog.auditLog_travellerId_fkey",
+    "label": "Add foreign key \"auditLog_travellerId_fkey\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "auditLog_travellerId_fkey",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"auditLog_travellerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_travellerId_fkey",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"auditLog_travellerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"auditLog\"\nADD CONSTRAINT \"auditLog_travellerId_fkey\"\nFOREIGN KEY (\"travellerId\")\nREFERENCES \"public\".\"traveller\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"auditLog_travellerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_travellerId_fkey",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.auditLog.auditLog_reminderId_fkey",
+    "label": "Add foreign key \"auditLog_reminderId_fkey\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "auditLog_reminderId_fkey",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"auditLog_reminderId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_reminderId_fkey",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"auditLog_reminderId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"auditLog\"\nADD CONSTRAINT \"auditLog_reminderId_fkey\"\nFOREIGN KEY (\"reminderId\")\nREFERENCES \"public\".\"reminder\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"auditLog_reminderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_reminderId_fkey",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.flight.flight_travellerId_fkey",
+    "label": "Add foreign key \"flight_travellerId_fkey\" on \"flight\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "flight_travellerId_fkey",
+        "table": "flight"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"flight_travellerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "flight_travellerId_fkey",
+          "public",
+          "\"public\".\"flight\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"flight_travellerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"flight\"\nADD CONSTRAINT \"flight_travellerId_fkey\"\nFOREIGN KEY (\"travellerId\")\nREFERENCES \"public\".\"traveller\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"flight_travellerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "flight_travellerId_fkey",
+          "public",
+          "\"public\".\"flight\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.reminder.reminder_flightId_fkey",
+    "label": "Add foreign key \"reminder_flightId_fkey\" on \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "reminder_flightId_fkey",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"reminder_flightId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_fkey",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"reminder_flightId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\"\nADD CONSTRAINT \"reminder_flightId_fkey\"\nFOREIGN KEY (\"flightId\")\nREFERENCES \"public\".\"flight\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"reminder_flightId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_fkey",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  }
+]
