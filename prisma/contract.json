@@ -49,16 +49,20 @@
                 "value": "REMINDER_CREATED"
               },
               {
-                "name": "REMINDER_DUE",
-                "value": "REMINDER_DUE"
+                "name": "ADMIN_REMINDER_DUE",
+                "value": "ADMIN_REMINDER_DUE"
               },
               {
-                "name": "ADMIN_ADVANCE_NOTIFICATION_SENT",
-                "value": "ADMIN_ADVANCE_NOTIFICATION_SENT"
+                "name": "ADMIN_REMINDER_SENT",
+                "value": "ADMIN_REMINDER_SENT"
               },
               {
-                "name": "TRAVELLER_REMINDER_SENT",
-                "value": "TRAVELLER_REMINDER_SENT"
+                "name": "CLIENT_REMINDER_DUE",
+                "value": "CLIENT_REMINDER_DUE"
+              },
+              {
+                "name": "CLIENT_REMINDER_SENT",
+                "value": "CLIENT_REMINDER_SENT"
               },
               {
                 "name": "ADMIN_CONFIRMATION_SENT",
@@ -100,6 +104,19 @@
               {
                 "name": "CANCELLED",
                 "value": "CANCELLED"
+              }
+            ]
+          },
+          "ReminderType": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ADMIN",
+                "value": "ADMIN"
+              },
+              {
+                "name": "CLIENT",
+                "value": "CLIENT"
               }
             ]
           }
@@ -320,9 +337,8 @@
               }
             },
             "relations": {
-              "reminder": {
-                "cardinality": "1:1",
-                "nullable": true,
+              "reminders": {
+                "cardinality": "1:N",
                 "on": {
                   "localFields": [
                     "id"
@@ -491,6 +507,19 @@
                   "plane": "domain"
                 }
               },
+              "type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ReminderType",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -569,6 +598,9 @@
                 },
                 "status": {
                   "column": "status"
+                },
+                "type": {
+                  "column": "type"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -702,8 +734,8 @@
             "auditLog": {
               "checks": [
                 {
-                  "expression": "\"eventType\" IN ('TRAVELLER_CREATED', 'TRAVELLER_UPDATED', 'FLIGHT_CREATED', 'FLIGHT_UPDATED', 'REMINDER_CREATED', 'REMINDER_DUE', 'ADMIN_ADVANCE_NOTIFICATION_SENT', 'TRAVELLER_REMINDER_SENT', 'ADMIN_CONFIRMATION_SENT', 'REMINDER_FAILED', 'REMINDER_RETRY_SCHEDULED', 'REMINDER_CANCELLED')",
-                  "name": "auditLog_eventType_check_48274968",
+                  "expression": "\"eventType\" IN ('TRAVELLER_CREATED', 'TRAVELLER_UPDATED', 'FLIGHT_CREATED', 'FLIGHT_UPDATED', 'REMINDER_CREATED', 'ADMIN_REMINDER_DUE', 'ADMIN_REMINDER_SENT', 'CLIENT_REMINDER_DUE', 'CLIENT_REMINDER_SENT', 'ADMIN_CONFIRMATION_SENT', 'REMINDER_FAILED', 'REMINDER_RETRY_SCHEDULED', 'REMINDER_CANCELLED')",
+                  "name": "auditLog_eventType_check_26bd1712",
                   "prefix": "auditLog_eventType_check"
                 }
               ],
@@ -951,6 +983,11 @@
                   "expression": "\"status\" IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED')",
                   "name": "reminder_status_check_03803961",
                   "prefix": "reminder_status_check"
+                },
+                {
+                  "expression": "\"type\" IN ('ADMIN', 'CLIENT')",
+                  "name": "reminder_type_check_2fe6c749",
+                  "prefix": "reminder_type_check"
                 }
               ],
               "columns": {
@@ -1032,6 +1069,17 @@
                     "plane": "storage"
                   }
                 },
+                "type": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ReminderType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -1057,7 +1105,16 @@
                   }
                 }
               ],
-              "indexes": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "flightId"
+                  ],
+                  "name": "reminder_flightId_idx_7ef5148f",
+                  "prefix": "reminder_flightId_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -1071,7 +1128,8 @@
                 },
                 {
                   "columns": [
-                    "flightId"
+                    "flightId",
+                    "type"
                   ]
                 }
               ]
@@ -1148,9 +1206,10 @@
                 "FLIGHT_CREATED",
                 "FLIGHT_UPDATED",
                 "REMINDER_CREATED",
-                "REMINDER_DUE",
-                "ADMIN_ADVANCE_NOTIFICATION_SENT",
-                "TRAVELLER_REMINDER_SENT",
+                "ADMIN_REMINDER_DUE",
+                "ADMIN_REMINDER_SENT",
+                "CLIENT_REMINDER_DUE",
+                "CLIENT_REMINDER_SENT",
                 "ADMIN_CONFIRMATION_SENT",
                 "REMINDER_FAILED",
                 "REMINDER_RETRY_SCHEDULED",
@@ -1166,6 +1225,13 @@
                 "FAILED",
                 "CANCELLED"
               ]
+            },
+            "ReminderType": {
+              "kind": "valueSet",
+              "values": [
+                "ADMIN",
+                "CLIENT"
+              ]
             }
           }
         },
@@ -1173,7 +1239,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "5743c851c43874f6e24bb17311ca7e32f4842d6510949bd9045bfcca02ed0484"
+    "storageHash": "f32f24c63bfb30c97c6a30525daa8ff73c7f48d6f2890cd160684af7fdd88e2c"
   },
   "execution": {
     "executionHash": "96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1",

@@ -117,4 +117,14 @@ To be updated after Git setup.
 ## Next Milestone
 
 Milestone 2 — Docker and PostgreSQL foundation.
-Milestone 3 — Database schema
+Milestone 3 — Database schema setup and migrations
+Milestone 4 — Google Sheets integration — connecting the A–N sheet structure to the PostgreSQL models, including the traveller email
+Here we connect the application to Google Sheet so the system can:
+
+Read traveller/flight records from Google Sheets.
+Map columns A–N to our database models.
+Create/update Traveller records.
+Create/update Flight records.
+Automatically create the corresponding Reminder.
+Keep PostgreSQL as the application's source of truth.
+Preserve the Sheet's local date/time values exactly as provided — no timezone conversion.

@@ -1,4 +1,9 @@
 // use prisma-8
+enum ReminderType {
+  ADMIN
+  CLIENT
+}
+
 enum ReminderStatus {
   PENDING
   PROCESSING
@@ -13,10 +18,15 @@ enum AuditEventType {
   FLIGHT_CREATED
   FLIGHT_UPDATED
   REMINDER_CREATED
-  REMINDER_DUE
-  ADMIN_ADVANCE_NOTIFICATION_SENT
-  TRAVELLER_REMINDER_SENT
+
+  ADMIN_REMINDER_DUE
+  ADMIN_REMINDER_SENT
+
+  CLIENT_REMINDER_DUE
+  CLIENT_REMINDER_SENT
+
   ADMIN_CONFIRMATION_SENT
+
   REMINDER_FAILED
   REMINDER_RETRY_SCHEDULED
   REMINDER_CANCELLED
@@ -24,7 +34,6 @@ enum AuditEventType {
 
 model Traveller {
   id        String               @id @default(uuid())
-  sheetRow  Int                  @unique
   name      String
   location  String?
   email     String               @unique
@@ -56,14 +65,15 @@ model Flight {
   updatedAt       temporal.updatedAt()
 
   traveller       Traveller            @relation(fields:[travellerId], references:[id], onDelete: Cascade)
-  reminder        Reminder?
+  reminders       Reminder[]
 }
 
 model Reminder {
   id                String               @id @default(uuid())
   reminderId        String               @unique
 
-  flightId          String               @unique
+  flightId          String
+  type              ReminderType
 
   scheduledFor      DateTime
   status            ReminderStatus       @default(PENDING)
@@ -80,6 +90,8 @@ model Reminder {
 
   flight            Flight               @relation(fields:[flightId], references:[id], onDelete: Cascade)
   auditLogs         AuditLog[]
+
+  @@unique([flightId, type])
 }
 
 model AuditLog {

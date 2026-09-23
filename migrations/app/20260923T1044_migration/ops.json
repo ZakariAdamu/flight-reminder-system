@@ -1,0 +1,373 @@
+[
+  {
+    "id": "dropCheckConstraint.auditLog.auditLog_eventType_check_48274968",
+    "label": "Drop check constraint \"auditLog_eventType_check_48274968\" on \"auditLog\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "auditLog_eventType_check_48274968",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"auditLog_eventType_check_48274968\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_eventType_check_48274968",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"auditLog_eventType_check_48274968\"",
+        "sql": "ALTER TABLE \"public\".\"auditLog\" DROP CONSTRAINT \"auditLog_eventType_check_48274968\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"auditLog_eventType_check_48274968\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_eventType_check_48274968",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropConstraint.reminder.reminder_flightId_key",
+    "label": "Drop constraint \"reminder_flightId_key\" on \"reminder\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "reminder_flightId_key",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_flightId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"reminder_flightId_key\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" DROP CONSTRAINT \"reminder_flightId_key\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_flightId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.reminder.type",
+    "label": "Add column \"type\" to \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "type",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"type\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "reminder",
+          "type"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"type\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD COLUMN \"type\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"type\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "reminder",
+          "type"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_migration.backfill-reminder-type",
+    "label": "Data transform: backfill-reminder-type",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check backfill-reminder-type has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"reminder\" WHERE \"type\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run backfill-reminder-type",
+        "sql": "UPDATE \"public\".\"reminder\" SET \"type\" = $1, \"updatedAt\" = $2 WHERE \"type\" IS NULL",
+        "params": [
+          "CLIENT",
+          "2026-09-23T11:18:50.418Z"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify backfill-reminder-type resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"reminder\" WHERE \"type\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.reminder.type",
+    "label": "Set NOT NULL on \"reminder\".\"type\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "type",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"type\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "reminder",
+          "type"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"type\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"reminder\" WHERE \"type\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"type\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ALTER COLUMN \"type\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"type\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "reminder",
+          "type",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.auditLog.auditLog_eventType_check_26bd1712",
+    "label": "Add check constraint \"auditLog_eventType_check_26bd1712\" on \"auditLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "auditLog_eventType_check_26bd1712",
+        "table": "auditLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"auditLog_eventType_check_26bd1712\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_eventType_check_26bd1712",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"auditLog_eventType_check_26bd1712\"",
+        "sql": "ALTER TABLE \"public\".\"auditLog\" ADD CONSTRAINT \"auditLog_eventType_check_26bd1712\" CHECK (\"eventType\" IN ('TRAVELLER_CREATED', 'TRAVELLER_UPDATED', 'FLIGHT_CREATED', 'FLIGHT_UPDATED', 'REMINDER_CREATED', 'ADMIN_REMINDER_DUE', 'ADMIN_REMINDER_SENT', 'CLIENT_REMINDER_DUE', 'CLIENT_REMINDER_SENT', 'ADMIN_CONFIRMATION_SENT', 'REMINDER_FAILED', 'REMINDER_RETRY_SCHEDULED', 'REMINDER_CANCELLED'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"auditLog_eventType_check_26bd1712\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "auditLog_eventType_check_26bd1712",
+          "public",
+          "\"public\".\"auditLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.reminder.reminder_type_check_2fe6c749",
+    "label": "Add check constraint \"reminder_type_check_2fe6c749\" on \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "reminder_type_check_2fe6c749",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_type_check_2fe6c749\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_type_check_2fe6c749",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"reminder_type_check_2fe6c749\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD CONSTRAINT \"reminder_type_check_2fe6c749\" CHECK (\"type\" IN ('ADMIN', 'CLIENT'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_type_check_2fe6c749\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_type_check_2fe6c749",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.reminder.reminder_flightId_type_key",
+    "label": "Add unique constraint on \"reminder\" (flightId, type)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "reminder_flightId_type_key",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_flightId_type_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_type_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"reminder_flightId_type_key\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD CONSTRAINT \"reminder_flightId_type_key\" UNIQUE (\"flightId\", \"type\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_flightId_type_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_flightId_type_key",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.reminder.reminder_flightId_idx_7ef5148f",
+    "label": "Create index \"reminder_flightId_idx_7ef5148f\" on \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "reminder_flightId_idx_7ef5148f",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"reminder_flightId_idx_7ef5148f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reminder_flightId_idx_7ef5148f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"reminder_flightId_idx_7ef5148f\"",
+        "sql": "CREATE INDEX \"reminder_flightId_idx_7ef5148f\" ON \"public\".\"reminder\" (\"flightId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"reminder_flightId_idx_7ef5148f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"reminder_flightId_idx_7ef5148f\""
+        ]
+      }
+    ]
+  }
+]
