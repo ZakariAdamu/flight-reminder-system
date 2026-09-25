@@ -113,3 +113,21 @@ model AuditLog {
   @@index([travellerId])
   @@index([reminderId])
 }
+
+model ValidationIssue {
+  id          String    @id @default(uuid())
+  fingerprint String    @unique
+  sheetRow    Int
+  field       String?
+  code        String
+  severity    String
+  value       String?
+  message     String
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@index([sheetRow])
+  @@index([severity])
+  @@index([resolvedAt])
+}

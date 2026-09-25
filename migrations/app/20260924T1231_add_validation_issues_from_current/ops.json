@@ -1,0 +1,284 @@
+[
+  {
+    "id": "dropConstraint.traveller.traveller_sheetRow_key",
+    "label": "Drop constraint \"traveller_sheetRow_key\" on \"traveller\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "traveller_sheetRow_key",
+        "table": "traveller"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"traveller_sheetRow_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_sheetRow_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"traveller_sheetRow_key\"",
+        "sql": "ALTER TABLE \"public\".\"traveller\" DROP CONSTRAINT \"traveller_sheetRow_key\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"traveller_sheetRow_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "traveller_sheetRow_key",
+          "public",
+          "\"public\".\"traveller\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropColumn.traveller.sheetRow",
+    "label": "Drop column \"sheetRow\" from \"traveller\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "sheetRow",
+        "table": "traveller"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"sheetRow\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "traveller",
+          "sheetRow"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"sheetRow\"",
+        "sql": "ALTER TABLE \"public\".\"traveller\" DROP COLUMN \"sheetRow\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"sheetRow\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "traveller",
+          "sheetRow"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.validationIssue",
+    "label": "Create table \"validationIssue\"",
+    "summary": "Creates table \"validationIssue\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"validationIssue\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"validationIssue\"",
+        "sql": "CREATE TABLE \"public\".\"validationIssue\" (\n  \"code\" text NOT NULL,\n  \"field\" text,\n  \"fingerprint\" text NOT NULL,\n  \"firstSeenAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"lastSeenAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"message\" text NOT NULL,\n  \"resolvedAt\" timestamptz,\n  \"severity\" text NOT NULL,\n  \"sheetRow\" int4 NOT NULL,\n  \"value\" text,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"validationIssue\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.validationIssue.validationIssue_fingerprint_key",
+    "label": "Add unique constraint on \"validationIssue\" (fingerprint)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "validationIssue_fingerprint_key",
+        "table": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"validationIssue_fingerprint_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "validationIssue_fingerprint_key",
+          "public",
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"validationIssue_fingerprint_key\"",
+        "sql": "ALTER TABLE \"public\".\"validationIssue\" ADD CONSTRAINT \"validationIssue_fingerprint_key\" UNIQUE (\"fingerprint\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"validationIssue_fingerprint_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "validationIssue_fingerprint_key",
+          "public",
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.validationIssue.validationIssue_resolvedAt_idx_a13a9d8d",
+    "label": "Create index \"validationIssue_resolvedAt_idx_a13a9d8d\" on \"validationIssue\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "validationIssue_resolvedAt_idx_a13a9d8d",
+        "table": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"validationIssue_resolvedAt_idx_a13a9d8d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_resolvedAt_idx_a13a9d8d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"validationIssue_resolvedAt_idx_a13a9d8d\"",
+        "sql": "CREATE INDEX \"validationIssue_resolvedAt_idx_a13a9d8d\" ON \"public\".\"validationIssue\" (\"resolvedAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"validationIssue_resolvedAt_idx_a13a9d8d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_resolvedAt_idx_a13a9d8d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.validationIssue.validationIssue_severity_idx_5b070f41",
+    "label": "Create index \"validationIssue_severity_idx_5b070f41\" on \"validationIssue\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "validationIssue_severity_idx_5b070f41",
+        "table": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"validationIssue_severity_idx_5b070f41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_severity_idx_5b070f41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"validationIssue_severity_idx_5b070f41\"",
+        "sql": "CREATE INDEX \"validationIssue_severity_idx_5b070f41\" ON \"public\".\"validationIssue\" (\"severity\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"validationIssue_severity_idx_5b070f41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_severity_idx_5b070f41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.validationIssue.validationIssue_sheetRow_idx_2c3c0125",
+    "label": "Create index \"validationIssue_sheetRow_idx_2c3c0125\" on \"validationIssue\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "validationIssue_sheetRow_idx_2c3c0125",
+        "table": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"validationIssue_sheetRow_idx_2c3c0125\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_sheetRow_idx_2c3c0125\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"validationIssue_sheetRow_idx_2c3c0125\"",
+        "sql": "CREATE INDEX \"validationIssue_sheetRow_idx_2c3c0125\" ON \"public\".\"validationIssue\" (\"sheetRow\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"validationIssue_sheetRow_idx_2c3c0125\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue_sheetRow_idx_2c3c0125\""
+        ]
+      }
+    ]
+  }
+]

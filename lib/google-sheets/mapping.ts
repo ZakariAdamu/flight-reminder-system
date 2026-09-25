@@ -8,8 +8,6 @@ export const REQUIRED_SHEET_HEADERS = [
 	"Arrival Date",
 	"Arrival Time",
 	"Layover City",
-	"Layover Begins",
-	"Layover Ends",
 	"Layover Duration",
 	"Email Address",
 ] as const;

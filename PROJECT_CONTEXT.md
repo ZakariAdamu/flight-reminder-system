@@ -6,22 +6,22 @@ A full-stack flight reminder and traveller notification management system.
 
 The system will:
 
-* Synchronize traveller and flight data from Google Sheets.
-* Validate the entire Google Sheet during synchronization.
-* Display traveller records and data-validation issues in a web dashboard.
-* Store application state and operational data in PostgreSQL.
-* Calculate reminder times automatically from flight departure date/time.
-* Send personalized flight reminders to travellers.
-* CC two administrators on traveller reminder emails.
-* Send an administrator reminder exactly 48 hours before flight departure.
-* Send the traveller reminder exactly 24 hours before flight departure.
-* Notify administrators after a traveller reminder has been successfully sent.
-* Maintain detailed audit logs.
-* Prevent duplicate notifications through database-backed idempotency.
-* Retry failed notification attempts using controlled retry logic.
-* Detect and surface Google Sheets data-entry problems early.
-* Run recurring synchronization and reminder-processing jobs.
-* Run using Docker in the production environment.
+- Synchronize traveller and flight data from Google Sheets.
+- Validate the entire Google Sheet during synchronization.
+- Display traveller records and data-validation issues in a web dashboard.
+- Store application state and operational data in PostgreSQL.
+- Calculate reminder times automatically from flight departure date/time.
+- Send personalized flight reminders to travellers.
+- CC two administrators on traveller reminder emails.
+- Send an administrator reminder exactly 48 hours before flight departure.
+- Send the traveller reminder exactly 24 hours before flight departure.
+- Notify administrators after a traveller reminder has been successfully sent.
+- Maintain detailed audit logs.
+- Prevent duplicate notifications through database-backed idempotency.
+- Retry failed notification attempts using controlled retry logic.
+- Detect and surface Google Sheets data-entry problems early.
+- Run recurring synchronization and reminder-processing jobs.
+- Run using Docker in the production environment.
 
 ---
 
@@ -125,12 +125,12 @@ CANCELLED
 
 Reminder records should support:
 
-* `sentAt`
-* `failedAt`
-* `errorMessage`
-* `attemptCount`
-* `providerMessageId`
-* `nextAttemptAt`
+- `sentAt`
+- `failedAt`
+- `errorMessage`
+- `attemptCount`
+- `providerMessageId`
+- `nextAttemptAt`
 
 ---
 
@@ -175,13 +175,13 @@ Google Sheets is the external operational data source/interface.
 
 PostgreSQL is the application's source of truth for:
 
-* Traveller records
-* Flight records
-* Reminder records
-* Reminder state
-* Audit logs
-* Validation issues
-* Notification processing state
+- Traveller records
+- Flight records
+- Reminder records
+- Reminder state
+- Audit logs
+- Validation issues
+- Notification processing state
 
 ---
 
@@ -228,27 +228,27 @@ This allows multiple Google Sheet rows to belong to the same traveller.
 
 ### Frontend
 
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
 
 ### Backend
 
-* Next.js server-side functionality
-* PostgreSQL
-* Prisma 8
-* Background processing/scheduling to be implemented
+- Next.js server-side functionality
+- PostgreSQL
+- Prisma 8
+- Background processing/scheduling to be implemented
 
 ### Infrastructure
 
-* Docker
-* Docker Compose
+- Docker
+- Docker Compose
 
 ### External Services
 
-* Google Sheets API
-* Transactional email provider — to be selected
+- Google Sheets API
+- Resend transactional email API (free tier for development and low-volume operation)
 
 ---
 
@@ -295,48 +295,48 @@ Traveller
 
 Contains:
 
-* UUID primary key
-* name
-* location
-* unique email
-* created/updated timestamps
-* flights
-* audit logs
+- UUID primary key
+- name
+- location
+- unique email
+- created/updated timestamps
+- flights
+- audit logs
 
 ### Flight
 
 Contains:
 
-* UUID primary key
-* traveller relationship
-* origin
-* destination
-* departure date/time
-* arrival date/time
-* layover city
-* layover beginning
-* layover ending
-* layover duration
-* unique Google Sheet row
-* created/updated timestamps
-* reminders
+- UUID primary key
+- traveller relationship
+- origin
+- destination
+- departure date/time
+- arrival date/time
+- layover city
+- layover beginning
+- layover ending
+- layover duration
+- unique Google Sheet row
+- created/updated timestamps
+- reminders
 
 ### Reminder
 
 Contains:
 
-* UUID primary key
-* unique `reminderId`
-* flight relationship
-* reminder type
-* scheduled time
-* status
-* attempt count
-* sent/failed timestamps
-* retry time
-* error information
-* provider message ID
-* created/updated timestamps
+- UUID primary key
+- unique `reminderId`
+- flight relationship
+- reminder type
+- scheduled time
+- status
+- attempt count
+- sent/failed timestamps
+- retry time
+- error information
+- provider message ID
+- created/updated timestamps
 
 Reminder types:
 
@@ -355,13 +355,13 @@ Uniqueness:
 
 Records important system events involving:
 
-* travellers
-* flights
-* reminders
-* notification processing
-* failures
-* retries
-* cancellations
+- travellers
+- flights
+- reminders
+- notification processing
+- failures
+- retries
+- cancellations
 
 ---
 
@@ -415,9 +415,9 @@ getSheetValues()
 
 `lib/google-sheets/mapping.ts` provides:
 
-* required-header definitions
-* header validation
-* raw row-to-record mapping
+- required-header definitions
+- header validation
+- raw row-to-record mapping
 
 Google Sheets authentication currently works through local Google Application Default Credentials with service-account impersonation.
 
@@ -454,42 +454,42 @@ A flight being five months away does not exempt its data from validation.
 
 ### Validation Principles
 
-* Validate the entire Sheet, not only upcoming flights.
-* Validate every relevant field before synchronization.
-* Detect missing, malformed, inconsistent, or logically suspicious data.
-* Do not silently correct potentially erroneous user-entered data.
-* Preserve the original Sheet value when reporting an issue.
-* Validation operates independently of the reminder scheduler.
-* Data-entry problems should be detected as soon as the synchronization cycle sees them.
+- Validate the entire Sheet, not only upcoming flights.
+- Validate every relevant field before synchronization.
+- Detect missing, malformed, inconsistent, or logically suspicious data.
+- Do not silently correct potentially erroneous user-entered data.
+- Preserve the original Sheet value when reporting an issue.
+- Validation operates independently of the reminder scheduler.
+- Data-entry problems should be detected as soon as the synchronization cycle sees them.
 
 ### Required/Expected Validation
 
 The system should validate:
 
-* Traveller name
-* Location where applicable
-* Origin
-* Destination
-* Departure date
-* Departure time
-* Arrival date
-* Arrival time
-* Layover city
-* Layover beginning
-* Layover ending
-* Layover duration
-* Email address
-* Reminder-date discrepancies where applicable
+- Traveller name
+- Location where applicable
+- Origin
+- Destination
+- Departure date
+- Departure time
+- Arrival date
+- Arrival time
+- Layover city
+- Layover beginning
+- Layover ending
+- Layover duration
+- Email address
+- Reminder-date discrepancies where applicable
 
 ### Date Validation
 
 Detect:
 
-* invalid calendar dates
-* malformed dates
-* missing required dates
-* arrival before departure
-* other logically inconsistent date relationships
+- invalid calendar dates
+- malformed dates
+- missing required dates
+- arrival before departure
+- other logically inconsistent date relationships
 
 Overnight flights are valid when the arrival date is later than the departure date.
 
@@ -549,10 +549,10 @@ is a valid overnight relationship.
 
 Validate:
 
-* presence/absence consistency
-* layover start/end times
-* layover duration
-* logical consistency between the values
+- presence/absence consistency
+- layover start/end times
+- layover duration
+- logical consistency between the values
 
 Where a layover appears to cross midnight but no layover date is supplied, the system should flag the ambiguity rather than silently guessing.
 
@@ -580,22 +580,22 @@ Use three validation levels:
 
 Informational observation.
 
-* Does not block synchronization.
-* Displayed where useful.
+- Does not block synchronization.
+- Displayed where useful.
 
 ### WARNING
 
 Potential problem requiring review.
 
-* Display on dashboard.
-* Does not necessarily prevent synchronization unless the affected data is unsafe for reminder processing.
+- Display on dashboard.
+- Does not necessarily prevent synchronization unless the affected data is unsafe for reminder processing.
 
 ### ERROR
 
 Data is unsafe or invalid for reminder processing.
 
-* Display on dashboard.
-* Prevent the affected flight/reminders from being created or updated until the issue is corrected.
+- Display on dashboard.
+- Prevent the affected flight/reminders from being created or updated until the issue is corrected.
 
 ---
 
@@ -605,17 +605,17 @@ Data-validation issues must be surfaced on the application dashboard.
 
 The dashboard should provide:
 
-* Number of open validation issues.
-* Issues grouped by severity.
-* Google Sheet row number.
-* Traveller name where available.
-* Affected field.
-* Original Sheet value.
-* Validation code.
-* Human-readable validation message.
-* Detection time.
-* Resolution status.
-* Ability to identify the Sheet row requiring correction.
+- Number of open validation issues.
+- Issues grouped by severity.
+- Google Sheet row number.
+- Traveller name where available.
+- Affected field.
+- Original Sheet value.
+- Validation code.
+- Human-readable validation message.
+- Detection time.
+- Resolution status.
+- Ability to identify the Sheet row requiring correction.
 
 ### Validation Email Policy
 
@@ -625,9 +625,9 @@ The dashboard is the primary mechanism for reviewing and resolving data-entry is
 
 Operational email notifications remain separate and are reserved for explicitly defined operational events, such as:
 
-* reminder failures
-* successful client reminder confirmation
-* administrator reminder emails
+- reminder failures
+- successful client reminder confirmation
+- administrator reminder emails
 
 ---
 
@@ -637,12 +637,12 @@ Validation issues should be stored in PostgreSQL.
 
 This allows the system to:
 
-* Prevent the same unchanged error from creating duplicate issues.
-* Track when an issue was first detected.
-* Track subsequent observations.
-* Mark an issue as resolved after the Sheet data is corrected.
-* Maintain historical validation information.
-* Display current open issues on the dashboard.
+- Prevent the same unchanged error from creating duplicate issues.
+- Track when an issue was first detected.
+- Track subsequent observations.
+- Mark an issue as resolved after the Sheet data is corrected.
+- Maintain historical validation information.
+- Display current open issues on the dashboard.
 
 Validation issues should use a deterministic identity/fingerprint based on information such as:
 
@@ -679,11 +679,11 @@ AI must not control critical reminder timing or scheduling decisions.
 
 The system must prevent duplicate emails even when:
 
-* a worker retries
-* a process crashes
-* a request is repeated
-* the same Sheet data is synchronized multiple times
-* a reminder is processed more than once
+- a worker retries
+- a process crashes
+- a request is repeated
+- the same Sheet data is synchronized multiple times
+- a reminder is processed more than once
 
 Use database constraints and idempotency mechanisms rather than relying solely on status checks.
 
@@ -731,44 +731,44 @@ The dashboard should provide switchable views for:
 
 Display relevant traveller/flight information such as:
 
-* Traveller name
-* Flight
-* Origin
-* Destination
-* Departure
-* Reminder status
-* Client reminder status
-* Admin reminder status
+- Traveller name
+- Flight
+- Origin
+- Destination
+- Departure
+- Reminder status
+- Client reminder status
+- Admin reminder status
 
 Include:
 
-* Search
-* Filtering
-* Status indicators
+- Search
+- Filtering
+- Status indicators
 
 ### Validation Issues
 
 Display:
 
-* Open issues
-* Severity
-* Sheet row
-* Traveller
-* Field
-* Original value
-* Error/warning message
-* Detection time
-* Resolution state
+- Open issues
+- Severity
+- Sheet row
+- Traveller
+- Field
+- Original value
+- Error/warning message
+- Detection time
+- Resolution state
 
 ### Audit Logs
 
 Display:
 
-* Timestamp
-* Traveller
-* Event
-* Result
-* Relevant reminder/flight information
+- Timestamp
+- Traveller
+- Event
+- Result
+- Relevant reminder/flight information
 
 ---
 
@@ -776,14 +776,14 @@ Display:
 
 Where useful, the system should support:
 
-* Test Email
-* Preview Email
-* Dry Run
-* Health Check
-* Structured Logging
-* Retry visibility
-* Reminder processing visibility
-* Synchronization status
+- Test Email
+- Preview Email
+- Dry Run
+- Health Check
+- Structured Logging
+- Retry visibility
+- Reminder processing visibility
+- Synchronization status
 
 ---
 
@@ -844,57 +844,203 @@ fa27fc2 chore: initialize flight reminder system
 
 Completed:
 
-* Next.js project initialized
-* TypeScript configured
-* ESLint configured
-* Tailwind CSS configured
-* App Router configured
-* Initial project documentation created
+- Next.js project initialized
+- TypeScript configured
+- ESLint configured
+- Tailwind CSS configured
+- App Router configured
+- Initial project documentation created
 
 ### Milestone 2 — Docker + PostgreSQL Foundation
 
 Completed:
 
-* PostgreSQL Docker container configured
-* Docker Compose configured
-* PostgreSQL health check configured
-* Local database established
+- PostgreSQL Docker container configured
+- Docker Compose configured
+- PostgreSQL health check configured
+- Local database established
 
 ### Milestone 3 — Database Schema
 
 Completed:
 
-* Traveller model
-* Flight model
-* Reminder model
-* AuditLog model
-* Reminder status lifecycle
-* Reminder type separation
-* Database migrations
-* Migration integrity verification
+- Traveller model
+- Flight model
+- Reminder model
+- AuditLog model
+- Reminder status lifecycle
+- Reminder type separation
+- Database migrations
+- Migration integrity verification
 
 ### Milestone 3b — Flight Reminder Architecture Correction
 
 Completed:
 
-* Added `ADMIN` and `CLIENT` reminder types.
-* Changed flights to support multiple reminders.
-* Added unique `(flightId, type)` constraint.
-* Removed traveller `sheetRow` as a unique identifier.
-* Made `Flight.sheetRow` the unique Sheet-row identifier.
-* Added deterministic reminder architecture for 48-hour and 24-hour reminders.
+- Added `ADMIN` and `CLIENT` reminder types.
+- Changed flights to support multiple reminders.
+- Added unique `(flightId, type)` constraint.
+- Removed traveller `sheetRow` as a unique identifier.
+- Made `Flight.sheetRow` the unique Sheet-row identifier.
+- Added deterministic reminder architecture for 48-hour and 24-hour reminders.
 
 ### Google Sheets Foundation
 
 Completed:
 
-* Google Sheets API installed.
-* Google Cloud service account configured.
-* Service-account impersonation configured for local development.
-* Google Sheet shared with the service account.
-* Google Sheets API successfully reading the configured Sheet.
-* Header-based mapping implemented.
-* Additional Sheet columns can exist without breaking the required application mapping.
+- Google Sheets API installed.
+- Google Cloud service account configured.
+- Service-account impersonation configured for local development.
+- Google Sheet shared with the service account.
+- Google Sheets API successfully reading the configured Sheet.
+- Header-based mapping implemented.
+- Additional Sheet columns can exist without breaking the required application mapping.
+
+---
+
+## 22. End-to-End Project Todo Status
+
+This checklist tracks the project from initial setup through production deployment.
+
+Status meanings:
+
+- **DONE** — implemented and verified in the repository.
+- **IN PROGRESS** — partially implemented or functional, but not complete.
+- **NOT STARTED** — no usable implementation exists yet.
+
+### Phase 1 — Project Foundation
+
+- [x] **DONE** — Initialize the Next.js application with the App Router.
+- [x] **DONE** — Configure TypeScript.
+- [x] **DONE** — Configure ESLint.
+- [x] **DONE** — Configure Tailwind CSS.
+- [x] **DONE** — Establish the root-level `app/` and `lib/` project structure.
+- [x] **DONE** — Add initial project documentation and environment configuration structure.
+
+### Phase 2 — Local Infrastructure
+
+- [x] **DONE** — Add Docker Compose configuration for PostgreSQL.
+- [x] **DONE** — Configure PostgreSQL credentials, database name, persistent volume, and health check.
+- [x] **DONE** — Create the local PostgreSQL development foundation.
+- [ ] **NOT STARTED** — Document and verify the complete local start-up workflow.
+
+### Phase 3 — Database and Domain Model
+
+- [x] **DONE** — Define Traveller, Flight, Reminder, and AuditLog models.
+- [x] **DONE** — Add reminder types for ADMIN and CLIENT reminders.
+- [x] **DONE** — Add reminder lifecycle statuses.
+- [x] **DONE** — Enforce unique traveller email addresses.
+- [x] **DONE** — Use the Google Sheet row as the unique flight source identifier.
+- [x] **DONE** — Enforce one ADMIN and one CLIENT reminder per flight.
+- [x] **DONE** — Add database migrations and generated contract artifacts.
+- [x] **DONE** — Verify migration integrity.
+- [x] **DONE** — Add the Prisma 8 application database runtime client.
+- [ ] **IN PROGRESS** — Add the remaining repository/data-access layer for broader application queries; synchronization data access is functional.
+
+### Phase 4 — Google Sheets Integration
+
+- [x] **DONE** — Install and configure the Google Sheets API client.
+- [x] **DONE** — Configure local Google authentication and service-account impersonation.
+- [x] **DONE** — Read the configured Google Sheet.
+- [x] **DONE** — Map rows by header names instead of fixed column positions.
+- [x] **DONE** — Preserve physical Google Sheet row numbers.
+- [x] **DONE** — Normalize incoming Sheet values.
+- [x] **DONE** — Allow additional Sheet columns without breaking application mapping.
+- [x] **DONE** — Implement the one-shot Google Sheets synchronization service.
+- [x] **DONE** — Upsert travellers by email during synchronization.
+- [x] **DONE** — Upsert flights by Sheet row during synchronization.
+- [x] **DONE** — Create or update ADMIN and CLIENT reminders during synchronization.
+- [x] **DONE** — Record traveller, flight, and reminder synchronization audit events.
+
+### Phase 5 — Validation and Data Quality
+
+- [x] **DONE** — Validate required Sheet headers.
+- [x] **DONE** — Validate the complete set of fetched rows through the validation scripts.
+- [x] **DONE** — Validate names, email addresses, dates, times, routes, arrival ordering, and layovers.
+- [x] **DONE** — Detect duplicate flight rows.
+- [x] **DONE** — Generate validation severity, code, message, field, value, and Sheet row information.
+- [x] **DONE** — Use deterministic validation fingerprints.
+- [x] **DONE** — Support 12-hour `h:mm AM/PM` time parsing and conversion.
+- [ ] **IN PROGRESS** — Align the remaining project documentation with the current 12-hour time format.
+- [x] **DONE** — Persist validation issues in PostgreSQL.
+- [x] **DONE** — Prevent unchanged validation issues from being duplicated across runs by fingerprint.
+- [x] **DONE** — Mark corrected validation issues as resolved.
+- [ ] **IN PROGRESS** — Keep validation persistence functional in scripts; dashboard visibility is still missing.
+- [ ] **NOT STARTED** — Compare manually entered reminder dates with calculated reminder dates.
+
+### Phase 6 — Reminder Calculation and Processing
+
+- [x] **DONE** — Calculate ADMIN reminders exactly 48 hours before departure.
+- [x] **DONE** — Calculate CLIENT reminders exactly 24 hours before departure.
+- [x] **DONE** — Create deterministic reminder identifiers.
+- [x] **DONE** — Implement due-reminder selection for pending and retryable failed reminders.
+- [x] **DONE** — Implement PROCESSING, SENT, and FAILED reminder state transitions.
+- [x] **DONE** — Implement controlled retries with capped exponential backoff.
+- [x] **DONE** — Prevent concurrent duplicate claims with conditional database updates.
+- [ ] **IN PROGRESS** — Complete reminder cancellation and failure handling policy.
+- [x] **DONE** — Connect the worker to the Resend email API through an injected sender.
+
+### Phase 7 — Email and Operational Notifications
+
+- [x] **DONE** — Select Resend as the transactional email provider.
+- [x] **DONE** — Implement traveller reminder email content.
+- [x] **DONE** — CC the configured administrators on traveller reminders.
+- [x] **DONE** — Implement the 48-hour administrator reminder email.
+- [x] **DONE** — Send administrator confirmation after a traveller reminder succeeds.
+- [x] **DONE** — Store the provider message ID on successful delivery.
+- [x] **DONE** — Keep validation issues out of automatic email notifications.
+- [ ] **IN PROGRESS** — Configure a verified Resend sender/domain and production credentials.
+
+### Phase 8 — Audit Logging
+
+- [ ] **NOT STARTED** — Persist traveller, flight, reminder, notification, failure, retry, and cancellation events.
+- [ ] **NOT STARTED** — Add audit-log query/data-access functions.
+- [ ] **NOT STARTED** — Display operational history to application users.
+
+### Phase 9 — Dashboard and Application UI
+
+- [ ] **NOT STARTED** — Replace the default Next.js starter page with the application dashboard.
+- [ ] **NOT STARTED** — Add the travellers and flights view.
+- [ ] **NOT STARTED** — Add search, filtering, and reminder status indicators.
+- [ ] **NOT STARTED** — Add the validation issues view.
+- [ ] **NOT STARTED** — Add severity, Sheet row, traveller, field, original value, message, and resolution state to issue display.
+- [ ] **NOT STARTED** — Add the audit logs view.
+- [ ] **NOT STARTED** — Add synchronization, reminder-processing, and health status visibility.
+
+### Phase 10 — Background Jobs and Operations
+
+- [ ] **NOT STARTED** — Implement recurring Google Sheet synchronization.
+- [ ] **IN PROGRESS** — Implement recurring reminder processing every 1–5 minutes; the worker and provider command exist, but no scheduler is wired yet.
+- [ ] **NOT STARTED** — Add structured application logging.
+- [ ] **NOT STARTED** — Add health checks for the application, database, Google Sheets, and email provider.
+- [ ] **NOT STARTED** — Add test email, preview email, and dry-run operational tools.
+
+### Phase 11 — Testing and Delivery Workflow
+
+- [x] **DONE** — Add basic Google Sheets and validation test scripts.
+- [x] **DONE** — Run the validation script against the live Sheet and PostgreSQL locally.
+- [ ] **NOT STARTED** — Add automated unit tests for parsers, validators, reminder calculations, and idempotency.
+- [ ] **NOT STARTED** — Add integration tests for synchronization, database writes, and notification processing.
+- [ ] **NOT STARTED** — Add end-to-end dashboard tests.
+- [ ] **NOT STARTED** — Add CI checks for linting, typechecking, tests, migrations, and builds.
+- [ ] **NOT STARTED** — Establish the documented commit, push, pull-request, review, and merge workflow.
+
+### Phase 12 — Production Deployment
+
+- [x] **DONE** — Define a Docker-based PostgreSQL foundation for local and production-oriented development.
+- [ ] **NOT STARTED** — Create the production Docker image for the Next.js application.
+- [ ] **NOT STARTED** — Configure production environment variables and secret management.
+- [ ] **NOT STARTED** — Provision production PostgreSQL.
+- [ ] **NOT STARTED** — Configure production Google Sheets authentication without storing service-account keys in the repository.
+- [ ] **NOT STARTED** — Configure the production email provider and sender identity.
+- [ ] **NOT STARTED** — Deploy the application and background workers.
+- [ ] **NOT STARTED** — Run production migrations safely.
+- [ ] **NOT STARTED** — Configure HTTPS, domains, monitoring, backups, and log retention.
+- [ ] **NOT STARTED** — Perform a production smoke test and verify reminder delivery.
+
+### Current Overall Position
+
+The project has completed its foundation, database design, Google Sheets read layer, validation persistence, one-shot synchronization, core reminder processing, and Resend email integration. It is currently **IN PROGRESS** at the operational automation stage. The main remaining work is recurring scheduling, sender/domain configuration, cancellation policy, the dashboard, automated delivery checks, and production deployment.
 
 ---
 
@@ -910,10 +1056,10 @@ Completed:
 
 Current implementation already includes:
 
-* Google Sheets API connection.
-* Raw Sheet retrieval.
-* Header validation.
-* Header-based row mapping.
+- Google Sheets API connection.
+- Raw Sheet retrieval.
+- Header validation.
+- Header-based row mapping.
 
 Next implementation steps:
 
@@ -935,75 +1081,76 @@ Next implementation steps:
 
 ### Milestone 5 — Traveller Dashboard
 
-* Traveller/flight table
-* Search
-* Filtering
-* Reminder status
-* Validation issue indicators
+- Traveller/flight table
+- Search
+- Filtering
+- Reminder status
+- Validation issue indicators
 
 ### Milestone 6 — Audit Logs
 
-* Audit log interface
-* Event filtering
-* Operational history
+- Audit log interface
+- Event filtering
+- Operational history
 
 ### Milestone 7 — Transactional Email Service
 
-* Select production email provider
-* Email templates
-* Traveller reminder
-* Administrator reminder
-* Administrator confirmation
-* Delivery/error handling
+- Resend provider selected
+- Environment-based credentials and recipients
+- Email templates
+- Traveller reminder with administrator CC
+- Administrator reminder
+- Administrator confirmation
+- Provider message tracking and developer failure notifications
 
 ### Milestone 8 — Reminder Scheduler
 
-* Background worker
-* 1–5 minute processing cycle
-* Deterministic reminder selection
-* Idempotent processing
+- Background worker
+- 1–5 minute processing cycle
+- Deterministic reminder selection
+- Idempotent processing
 
 ### Milestone 9 — Reliability and Retry System
 
-* Retry strategy
-* Exponential backoff
-* Failure handling
-* Idempotency
-* Provider message tracking
+- Retry strategy
+- Exponential backoff
+- Failure handling
+- Idempotency
+- Provider message tracking
 
 ### Milestone 10 — Production Deployment
 
-* Production Docker configuration
-* Production database
-* Secrets management
-* Google Sheets production authentication
-* Email provider configuration
-* Worker deployment
-* Health monitoring
-* Logging
-* Backup/recovery considerations
+- Production Docker configuration
+- Production database
+- Secrets management
+- Google Sheets production authentication
+- Email provider configuration
+- Worker deployment
+- Health monitoring
+- Logging
+- Backup/recovery considerations
 
 ---
 
 ## 25. Important Implementation Principles
 
-* PostgreSQL is the application's source of truth.
-* Google Sheets is the external operational data source.
-* Sheet columns must be mapped by header name rather than fixed column position.
-* A Google Sheet row represents a flight record, not necessarily a traveller.
-* A traveller can have multiple flights.
-* Reminder timing is calculated from departure date/time only.
-* No airport timezone conversion is performed.
-* ADMIN reminders are scheduled 48 hours before departure.
-* CLIENT reminders are scheduled 24 hours before departure.
-* Data validation runs independently of reminder processing.
-* The entire Sheet must be validated during synchronization.
-* Validation issues appear on the dashboard and do not automatically generate email notifications.
-* Operational email notifications are separate from data-quality warnings.
-* Critical scheduling logic must remain deterministic and must not depend on AI.
-* Duplicate reminders and duplicate emails must be prevented through database-backed idempotency.
-* Failed email operations must support controlled retries.
-* Existing valid data must not be silently overwritten with malformed data.
-* Potentially erroneous Sheet values should be surfaced for human review rather than silently corrected.
-* Every major architectural or business-rule change should be reflected in this `PROJECT_CONTEXT.md`.
-* The project should maintain clean, meaningful Git milestones so development can continue safely across sessions.
+- PostgreSQL is the application's source of truth.
+- Google Sheets is the external operational data source.
+- Sheet columns must be mapped by header name rather than fixed column position.
+- A Google Sheet row represents a flight record, not necessarily a traveller.
+- A traveller can have multiple flights.
+- Reminder timing is calculated from departure date/time only.
+- No airport timezone conversion is performed.
+- ADMIN reminders are scheduled 48 hours before departure.
+- CLIENT reminders are scheduled 24 hours before departure.
+- Data validation runs independently of reminder processing.
+- The entire Sheet must be validated during synchronization.
+- Validation issues appear on the dashboard and do not automatically generate email notifications.
+- Operational email notifications are separate from data-quality warnings.
+- Critical scheduling logic must remain deterministic and must not depend on AI.
+- Duplicate reminders and duplicate emails must be prevented through database-backed idempotency.
+- Failed email operations must support controlled retries.
+- Existing valid data must not be silently overwritten with malformed data.
+- Potentially erroneous Sheet values should be surfaced for human review rather than silently corrected.
+- Every major architectural or business-rule change should be reflected in this `PROJECT_CONTEXT.md`.
+- The project should maintain clean, meaningful Git milestones so development can continue safely across sessions.
