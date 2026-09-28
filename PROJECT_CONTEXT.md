@@ -965,7 +965,7 @@ Status meanings:
 - [x] **DONE** — Persist validation issues in PostgreSQL.
 - [x] **DONE** — Prevent unchanged validation issues from being duplicated across runs by fingerprint.
 - [x] **DONE** — Mark corrected validation issues as resolved.
-- [ ] **IN PROGRESS** — Keep validation persistence functional in scripts; dashboard visibility is still missing.
+- [x] **DONE** — Keep validation persistence functional in scripts and expose open issues in the dashboard.
 - [ ] **NOT STARTED** — Compare manually entered reminder dates with calculated reminder dates.
 
 ### Phase 6 — Reminder Calculation and Processing
@@ -993,18 +993,18 @@ Status meanings:
 
 ### Phase 8 — Audit Logging
 
-- [ ] **NOT STARTED** — Persist traveller, flight, reminder, notification, failure, retry, and cancellation events.
-- [ ] **NOT STARTED** — Add audit-log query/data-access functions.
-- [ ] **NOT STARTED** — Display operational history to application users.
+- [ ] **IN PROGRESS** — Persist traveller, flight, reminder, notification, failure, retry, and cancellation events; the current worker persists the main due, sent, and failure events, while retry and cancellation coverage remains incomplete.
+- [x] **DONE** — Add audit-log query/data-access functions for the dashboard.
+- [x] **DONE** — Display operational history to application users.
 
 ### Phase 9 — Dashboard and Application UI
 
-- [ ] **NOT STARTED** — Replace the default Next.js starter page with the application dashboard.
-- [ ] **NOT STARTED** — Add the travellers and flights view.
-- [ ] **NOT STARTED** — Add search, filtering, and reminder status indicators.
-- [ ] **NOT STARTED** — Add the validation issues view.
-- [ ] **NOT STARTED** — Add severity, Sheet row, traveller, field, original value, message, and resolution state to issue display.
-- [ ] **NOT STARTED** — Add the audit logs view.
+- [x] **DONE** — Replace the default Next.js starter page with the application dashboard.
+- [x] **DONE** — Add the travellers and flights view.
+- [x] **DONE** — Add search, filtering, and reminder status indicators.
+- [x] **DONE** — Add the validation issues view.
+- [x] **DONE** — Add severity, Sheet row, field, original value, message, and resolution state to issue display.
+- [x] **DONE** — Add the audit logs view.
 - [ ] **NOT STARTED** — Add synchronization, reminder-processing, and health status visibility.
 
 ### Phase 10 — Background Jobs and Operations
@@ -1040,7 +1040,7 @@ Status meanings:
 
 ### Current Overall Position
 
-The project has completed its foundation, database design, Google Sheets read layer, validation persistence, one-shot synchronization, core reminder processing, and Resend email integration. It is currently **IN PROGRESS** at the operational automation stage. The main remaining work is recurring scheduling, sender/domain configuration, cancellation policy, the dashboard, automated delivery checks, and production deployment.
+The project has completed its foundation, database design, Google Sheets read layer, validation persistence, one-shot synchronization, core reminder processing, Resend email integration, and the first operational dashboard. It is currently **IN PROGRESS** at the operational automation stage. The main remaining work is recurring scheduling, sender/domain verification, cancellation and retry audit coverage, dashboard health/synchronization visibility, automated delivery checks, and production deployment.
 
 ---
 
