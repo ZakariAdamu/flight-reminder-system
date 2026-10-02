@@ -3,29 +3,25 @@ import { Temporal } from "temporal-polyfill";
 import { randomUUID } from "node:crypto";
 
 import { getSheetValues } from "./google-sheets";
-import { rowsToRecords, validateSheetHeaders } from "./google-sheets/mapping";
+import {
+	isCancelledSheetRow,
+	isEmptySheetRow,
+	isNilOnlySheetRow,
+	rowsToRecords,
+} from "./google-sheets/mapping";
 import {
 	normalizeSheetRows,
 	type NormalizedSheetRow,
 } from "./google-sheets/normalize";
-import {
-	flattenValidationIssues,
-	validateEntireSheet,
-} from "./validation/validate-sheet-data";
-import { persistValidationIssues } from "./validation/persist-validation-issues";
-import { ValidationSeverity } from "./validation/types";
-import { combineSheetDateAndTime } from "./validation/date-time";
+import { combineSheetDateAndTime } from "./google-sheets/date-time";
 import { db } from "./db";
-import type { Timestamptz } from "@prisma/orm-postgres/target/codec-types";
 
-const instant = (date: Date): Timestamptz =>
-	Temporal.Instant.fromEpochMilliseconds(
-		date.getTime(),
-	) as unknown as Timestamptz;
+const instant = (date: Date): Temporal.Instant =>
+	Temporal.Instant.fromEpochMilliseconds(date.getTime());
 
-const now = (): Timestamptz => instant(new Date());
+const now = (): Temporal.Instant => instant(new Date());
 
-function parseDateTime(dateValue: string, timeValue: string): Timestamptz {
+function parseDateTime(dateValue: string, timeValue: string): Temporal.Instant {
 	const date = combineSheetDateAndTime(dateValue, timeValue);
 
 	if (!date) {
@@ -38,20 +34,39 @@ function parseDateTime(dateValue: string, timeValue: string): Timestamptz {
 function optionalDateTime(
 	dateValue: string,
 	timeValue: string,
-): Timestamptz | null {
-	if (!dateValue || !timeValue) {
+): Temporal.Instant | null {
+	const placeholderValues = new Set([
+		"-",
+		"—",
+		"n/a",
+		"na",
+		"nil",
+		"cancelled",
+	]);
+	const normalizedDate = dateValue.trim().toLowerCase();
+	const normalizedTime = timeValue.trim().toLowerCase();
+
+	if (
+		!normalizedDate ||
+		!normalizedTime ||
+		placeholderValues.has(normalizedDate) ||
+		placeholderValues.has(normalizedTime)
+	) {
 		return null;
 	}
 
 	return parseDateTime(dateValue, timeValue);
 }
 
-function reminderTime(departureAt: Timestamptz, hoursBeforeDeparture: number) {
+function reminderTime(
+	departureAt: Temporal.Instant,
+	hoursBeforeDeparture: number,
+) {
 	const departure = Temporal.Instant.from(departureAt);
 
 	return departure.subtract({
 		hours: hoursBeforeDeparture,
-	}) as unknown as Timestamptz;
+	});
 }
 
 function usableFlightRow(row: NormalizedSheetRow): boolean {
@@ -99,10 +114,13 @@ async function upsertFlight(row: NormalizedSheetRow, travellerId: string) {
 	const departureAt = parseDateTime(row.departureDate, row.departureTime);
 	const arrivalAt = optionalDateTime(row.arrivalDate, row.arrivalTime);
 	const layoverBeginsAt = optionalDateTime(
-		row.departureDate,
+		row.layoverBeginsDate || row.departureDate,
 		row.layoverBegins,
 	);
-	const layoverEndsAt = optionalDateTime(row.departureDate, row.layoverEnds);
+	const layoverEndsAt = optionalDateTime(
+		row.layoverEndsDate || row.departureDate,
+		row.layoverEnds,
+	);
 	const timestamp = now();
 	const existing = await db.orm.public.Flight.where({
 		sheetRow: row.sheetRow,
@@ -140,7 +158,7 @@ async function upsertReminder(
 	flightId: string,
 	sheetRow: number,
 	type: "ADMIN" | "CLIENT",
-	departureAt: Timestamptz,
+	departureAt: Temporal.Instant,
 ) {
 	const reminderId = `flight-${sheetRow}-${type.toLowerCase()}`;
 	const scheduledFor = reminderTime(departureAt, type === "ADMIN" ? 48 : 24);
@@ -201,7 +219,8 @@ export type SyncSummary = {
 	rowsRead: number;
 	rowsSynced: number;
 	rowsSkipped: number;
-	issuesFound: number;
+	emptyRows: number;
+	cancelledRows: number;
 	remindersCreated: number;
 };
 
@@ -213,49 +232,63 @@ export async function syncGoogleSheet(): Promise<SyncSummary> {
 			rowsRead: 0,
 			rowsSynced: 0,
 			rowsSkipped: 0,
-			issuesFound: 0,
+			emptyRows: 0,
+			cancelledRows: 0,
 			remindersCreated: 0,
 		};
 	}
 
-	const [headers, ...rows] = values;
-	validateSheetHeaders(headers);
-
+	const [headers, ...allRows] = values;
+	const nilBoundary = allRows.findIndex(isNilOnlySheetRow);
+	const rows = nilBoundary === -1 ? allRows : allRows.slice(0, nilBoundary);
 	const records = rowsToRecords(headers, rows);
 	const normalizedRows = normalizeSheetRows(records, 2);
-	const results = validateEntireSheet(normalizedRows);
-	const issues = flattenValidationIssues(results);
-
-	await persistValidationIssues(issues);
 
 	let rowsSynced = 0;
 	let rowsSkipped = 0;
+	let emptyRows = 0;
+	let cancelledRows = 0;
 	let remindersCreated = 0;
 
-	for (const result of results) {
-		if (!result.isValidForSync || !usableFlightRow(result.row)) {
+	for (const [index, row] of normalizedRows.entries()) {
+		const rawRow = rows[index];
+		const record = records[index];
+
+		if (isEmptySheetRow(rawRow)) {
+			emptyRows += 1;
 			rowsSkipped += 1;
 			continue;
 		}
 
-		const traveller = await upsertTraveller(result.row);
+		if (isCancelledSheetRow(record)) {
+			cancelledRows += 1;
+			rowsSkipped += 1;
+			continue;
+		}
+
+		if (!usableFlightRow(row)) {
+			rowsSkipped += 1;
+			continue;
+		}
+
+		const traveller = await upsertTraveller(row);
 		await recordAudit(
 			traveller.id,
-			`${traveller.created ? "Created" : "Updated"} traveller from Sheet row ${result.row.sheetRow}.`,
+			`${traveller.created ? "Created" : "Updated"} traveller from Sheet row ${row.sheetRow}.`,
 			traveller.created ? "TRAVELLER_CREATED" : "TRAVELLER_UPDATED",
 		);
 
-		const flight = await upsertFlight(result.row, traveller.id);
+		const flight = await upsertFlight(row, traveller.id);
 		await recordAudit(
 			traveller.id,
-			`${flight.created ? "Created" : "Updated"} flight from Sheet row ${result.row.sheetRow}.`,
+			`${flight.created ? "Created" : "Updated"} flight from Sheet row ${row.sheetRow}.`,
 			flight.created ? "FLIGHT_CREATED" : "FLIGHT_UPDATED",
 		);
 
 		for (const type of ["ADMIN", "CLIENT"] as const) {
 			const reminder = await upsertReminder(
 				flight.id,
-				result.row.sheetRow,
+				row.sheetRow,
 				type,
 				flight.departureAt,
 			);
@@ -264,7 +297,7 @@ export async function syncGoogleSheet(): Promise<SyncSummary> {
 				remindersCreated += 1;
 				await recordAudit(
 					traveller.id,
-					`Created ${type} reminder for Sheet row ${result.row.sheetRow}.`,
+					`Created ${type} reminder for Sheet row ${row.sheetRow}.`,
 					"REMINDER_CREATED",
 					reminder.id,
 				);
@@ -278,9 +311,8 @@ export async function syncGoogleSheet(): Promise<SyncSummary> {
 		rowsRead: normalizedRows.length,
 		rowsSynced,
 		rowsSkipped,
-		issuesFound: issues.filter(
-			(issue) => issue.severity === ValidationSeverity.ERROR,
-		).length,
+		emptyRows,
+		cancelledRows,
 		remindersCreated,
 	};
 }

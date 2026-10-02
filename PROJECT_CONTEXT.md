@@ -7,8 +7,7 @@ A full-stack flight reminder and traveller notification management system.
 The system will:
 
 - Synchronize traveller and flight data from Google Sheets.
-- Validate the entire Google Sheet during synchronization.
-- Display traveller records and data-validation issues in a web dashboard.
+- Display traveller records and operational history in a web dashboard.
 - Store application state and operational data in PostgreSQL.
 - Calculate reminder times automatically from flight departure date/time.
 - Send personalized flight reminders to travellers.
@@ -19,7 +18,6 @@ The system will:
 - Maintain detailed audit logs.
 - Prevent duplicate notifications through database-backed idempotency.
 - Retry failed notification attempts using controlled retry logic.
-- Detect and surface Google Sheets data-entry problems early.
 - Run recurring synchronization and reminder-processing jobs.
 - Run using Docker in the production environment.
 
@@ -87,8 +85,6 @@ are **not authoritative**.
 
 The application calculates reminder times itself.
 
-The application may compare the Sheet's manually entered reminder values against its calculated values and surface discrepancies as data-validation issues.
-
 ---
 
 ### 2.6 Reminder Types
@@ -121,6 +117,7 @@ PROCESSING
 SENT
 FAILED
 CANCELLED
+SKIPPED
 ```
 
 Reminder records should support:
@@ -143,20 +140,10 @@ Google Sheets
 Fetch entire sheet
       │
       ▼
-Header validation
-      │
-      ▼
 Row normalization
       │
       ▼
-Full-sheet data validation
-      │
-      ├───────────────┐
-      ▼               ▼
-Validation issues   Valid records
-      │               │
-      ▼               ▼
-PostgreSQL          PostgreSQL sync
+PostgreSQL sync
       │               │
       ▼               ▼
 Dashboard          Traveller
@@ -367,14 +354,14 @@ Records important system events involving:
 
 ## 8. Google Sheets Integration
 
-The operational Google Sheet currently contains columns A–T.
+The operational Google Sheet currently returns 17 populated columns in the configured range.
 
 Important application fields include:
 
 ```text
 SN
-NAMES OF CLIENTS
-location
+Name of  Clients
+Route
 Origin
 Destination
 Departure Date
@@ -382,21 +369,14 @@ Departure Time
 Arrival Date
 Arrival Time
 Layover City
-Layover Begins
-Layover Ends
+Layover Start Date
+Layover End Date
+Layover Start Time
+Layover End Time
 Layover Duration
-Email Address
-```
-
-Additional Sheet columns currently include:
-
-```text
-TIME
-24 hrs reminder date
-48hr Reminder Date
-Booked Dates
-Status
-Notes
+Client Email
+Flight Status
+Reminder Status
 ```
 
 The application must use **header-based mapping**, not fixed column positions.
@@ -418,6 +398,9 @@ getSheetValues()
 - required-header definitions
 - header validation
 - raw row-to-record mapping
+- empty-row and cancelled-row classification
+- ARRAYFORMULA `Nil`-tail detection
+- status-column read/write helpers for `Flight Status` and `Reminder Status`
 
 Google Sheets authentication currently works through local Google Application Default Credentials with service-account impersonation.
 
@@ -439,6 +422,15 @@ Synchronization should:
 8. Synchronize valid records into PostgreSQL.
 9. Create or update the corresponding flight reminders.
 10. Record relevant audit events.
+
+Current sync behavior:
+
+- A row containing only `Nil` values is treated as the first ARRAYFORMULA-generated tail row.
+- The first `Nil`-only row and every row after it are excluded from sync, UI display, and empty-row counts.
+- Cancelled rows are skipped and counted separately.
+- Placeholder-only optional values such as `Nil`, `—`, `N/A`, and `-` do not abort synchronization.
+- The latest verified run read 39 real rows, synchronized 37, skipped 2 cancelled rows, and created no duplicate reminders.
+- `Flight Status` is the cancellation source; `Reminder Status` does not override database idempotency during sync.
 
 A traveller is upserted using its unique email.
 
@@ -671,6 +663,17 @@ The worker should identify reminders whose scheduled time has arrived within the
 
 Reminder processing must be deterministic and database-backed.
 
+Current implementation:
+
+- `lib/reminder-processing.ts` selects due `PENDING` reminders and retryable `FAILED` reminders.
+- Reminders are conditionally claimed as `PROCESSING` before sending.
+- Failed sends receive capped exponential retry timing through `nextAttemptAt`.
+- `scripts/process-reminders.ts` runs one processing cycle and reports claimed, sent, and failed totals.
+- Stale `PROCESSING` claims are recovered after ten minutes.
+- Cancelled Sheet flights become `SKIPPED` before any email is sent.
+- Successful, failed, and skipped processing writes the reminder type/status back to the Sheet.
+- Production scheduling is configured through Vercel Cron at `/api/cron/reminders` every five minutes.
+
 AI must not control critical reminder timing or scheduling decisions.
 
 ---
@@ -745,6 +748,21 @@ Include:
 - Search
 - Filtering
 - Status indicators
+
+### Google Sheets source
+
+- The raw Sheet table is rendered before summary metrics or computed flight views.
+- Headers and cells are displayed in the live Sheet order.
+- Search operates across raw Sheet row values.
+- Empty and cancelled row counts are displayed above the table.
+
+### Upcoming reminder
+
+The dashboard displays the next reminder eligible for processing:
+
+- `PENDING` reminders use `scheduledFor`.
+- Retryable `FAILED` reminders use `nextAttemptAt`.
+- The panel shows process time, scheduled time, reminder type and status, attempts, reminder ID, traveller, email, route, Sheet row, and the latest error.
 
 ### Validation Issues
 
@@ -929,6 +947,7 @@ Status meanings:
 - [x] **DONE** — Define Traveller, Flight, Reminder, and AuditLog models.
 - [x] **DONE** — Add reminder types for ADMIN and CLIENT reminders.
 - [x] **DONE** — Add reminder lifecycle statuses.
+- [x] **DONE** — Add `SKIPPED` as a terminal reminder state for cancelled flights.
 - [x] **DONE** — Enforce unique traveller email addresses.
 - [x] **DONE** — Use the Google Sheet row as the unique flight source identifier.
 - [x] **DONE** — Enforce one ADMIN and one CLIENT reminder per flight.
@@ -951,6 +970,10 @@ Status meanings:
 - [x] **DONE** — Upsert flights by Sheet row during synchronization.
 - [x] **DONE** — Create or update ADMIN and CLIENT reminders during synchronization.
 - [x] **DONE** — Record traveller, flight, and reminder synchronization audit events.
+- [x] **DONE** — Stop at the first ARRAYFORMULA-generated `Nil`-only row and exclude the generated tail from counts.
+- [x] **DONE** — Skip and count cancelled rows without parsing their flight values.
+- [x] **DONE** — Read separate `Flight Status` and `Reminder Status` columns.
+- [x] **DONE** — Write reminder processing status back to Google Sheets.
 
 ### Phase 5 — Validation and Data Quality
 
@@ -979,6 +1002,9 @@ Status meanings:
 - [x] **DONE** — Prevent concurrent duplicate claims with conditional database updates.
 - [ ] **IN PROGRESS** — Complete reminder cancellation and failure handling policy.
 - [x] **DONE** — Connect the worker to the Resend email API through an injected sender.
+- [x] **DONE** — Expose the next pending or retryable reminder in the dashboard with processing details.
+- [x] **DONE** — Recover stale `PROCESSING` claims and retry them safely.
+- [x] **DONE** — Check live Sheet flight status before claiming or sending a reminder.
 
 ### Phase 7 — Email and Operational Notifications
 
@@ -989,7 +1015,9 @@ Status meanings:
 - [x] **DONE** — Send administrator confirmation after a traveller reminder succeeds.
 - [x] **DONE** — Store the provider message ID on successful delivery.
 - [x] **DONE** — Keep validation issues out of automatic email notifications.
-- [ ] **IN PROGRESS** — Configure a verified Resend sender/domain and production credentials.
+- [ ] **IN PROGRESS** — Configure a verified Resend sender/domain and production credentials before real automatic sending.
+- [x] **DONE** — Provide the one-cycle `pnpm process:reminders` command for controlled email processing.
+- [x] **DONE** — Add an authenticated Vercel Cron route for five-minute processing.
 
 ### Phase 8 — Audit Logging
 
@@ -1005,12 +1033,15 @@ Status meanings:
 - [x] **DONE** — Add the validation issues view.
 - [x] **DONE** — Add severity, Sheet row, field, original value, message, and resolution state to issue display.
 - [x] **DONE** — Add the audit logs view.
-- [ ] **NOT STARTED** — Add synchronization, reminder-processing, and health status visibility.
+- [x] **DONE** — Render the live Google Sheet headers and raw rows as the primary source view.
+- [x] **DONE** — Display empty and cancelled Sheet row counts.
+- [x] **DONE** — Display the next pending or retryable reminder in detail.
+- [ ] **IN PROGRESS** — Add synchronization, reminder-processing, and health status visibility beyond the upcoming reminder panel.
 
 ### Phase 10 — Background Jobs and Operations
 
 - [ ] **NOT STARTED** — Implement recurring Google Sheet synchronization.
-- [ ] **IN PROGRESS** — Implement recurring reminder processing every 1–5 minutes; the worker and provider command exist, but no scheduler is wired yet.
+- [x] **DONE** — Configure recurring reminder processing every five minutes through Vercel Cron.
 - [ ] **NOT STARTED** — Add structured application logging.
 - [ ] **NOT STARTED** — Add health checks for the application, database, Google Sheets, and email provider.
 - [ ] **NOT STARTED** — Add test email, preview email, and dry-run operational tools.
@@ -1040,19 +1071,19 @@ Status meanings:
 
 ### Current Overall Position
 
-The project has completed its foundation, database design, Google Sheets read layer, validation persistence, one-shot synchronization, core reminder processing, Resend email integration, and the first operational dashboard. It is currently **IN PROGRESS** at the operational automation stage. The main remaining work is recurring scheduling, sender/domain verification, cancellation and retry audit coverage, dashboard health/synchronization visibility, automated delivery checks, and production deployment.
+The project has completed its foundation, database design, Google Sheets read/write layer, one-shot synchronization, core reminder processing, Resend email integration, raw Sheet-first dashboard, upcoming-reminder visibility, and Vercel Cron scheduling. It is currently **IN PROGRESS** at production operationalization. The immediate next step is configuring the listed Vercel environment variables and running a controlled production smoke test. Remaining work includes sender/domain verification, automated delivery checks, dashboard health/synchronization visibility, and production deployment verification.
 
 ---
 
 ## 22. Current Phase
 
-**Phase 4 — Google Sheets Integration and Data Validation**
+**Phase 7/10 — Transactional Email and Operational Automation**
 
 ---
 
 ## 23. Current Milestone
 
-**Milestone 4 — Google Sheets synchronization, normalization, and full-sheet data validation**
+**Milestone 7/8 — Controlled reminder sending, upcoming-reminder visibility, and recurring processing**
 
 Current implementation already includes:
 
@@ -1060,20 +1091,22 @@ Current implementation already includes:
 - Raw Sheet retrieval.
 - Header validation.
 - Header-based row mapping.
+- ARRAYFORMULA `Nil`-tail exclusion.
+- Cancelled and empty-row counting.
+- PostgreSQL-backed reminder calculation and claiming.
+- Resend sender and one-cycle reminder processing.
+- Dashboard detail for the next pending or retryable reminder.
+- Separate `Flight Status` and `Reminder Status` integration.
+- `SKIPPED` cancellation state and live Sheet cancellation checks.
+- Authenticated five-minute Vercel Cron route.
 
 Next implementation steps:
 
-1. Build row normalization.
-2. Build full-sheet validation.
-3. Define validation codes and severity.
-4. Add persistent validation issues to PostgreSQL.
-5. Test validation against the real `Return_Flights` data.
-6. Build valid-record synchronization into PostgreSQL.
-7. Create/update Traveller records.
-8. Create/update Flight records.
-9. Create/update ADMIN and CLIENT reminders.
-10. Add synchronization audit events.
-11. Build dashboard validation-issue visibility.
+1. Verify `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAILS`, and `DEVELOPER_EMAILS` with a verified sender/domain.
+2. Run `pnpm process:reminders` once in a controlled window and verify Resend delivery, database status, provider ID, and audit events.
+3. Deploy and verify the Vercel Cron invocation with a test client and a non-cancelled due reminder.
+4. Add automated tests for reminder claiming, retries, idempotency, cancellation, write-back, and email sender behavior.
+5. Add synchronization, worker, database, Sheets, and Resend health status to the dashboard.
 
 ---
 
@@ -1154,3 +1187,115 @@ Next implementation steps:
 - Potentially erroneous Sheet values should be surfaced for human review rather than silently corrected.
 - Every major architectural or business-rule change should be reflected in this `PROJECT_CONTEXT.md`.
 - The project should maintain clean, meaningful Git milestones so development can continue safely across sessions.
+
+---
+
+## 26. Chronological File Map
+
+The file lists below follow the order a new contributor should read or change the project. Each phase maps the project steps above to the files that implement them.
+
+### Phase 1 — Project Foundation
+
+1. `package.json` — scripts, dependencies, and package manager.
+2. `tsconfig.json` — TypeScript configuration.
+3. `next.config.ts` — Next.js configuration.
+4. `app/layout.tsx` — root layout and metadata.
+5. `app/globals.css` — global design tokens and application styling.
+6. `app/page.tsx` — root server-rendered page entry point.
+
+### Phase 2 — Local Infrastructure
+
+1. `docker-compose.yml` — PostgreSQL service, health check, and persistence.
+2. `.env` — local runtime configuration; never commit secrets.
+3. `README.md` — local setup and command documentation.
+4. `prisma.config.ts` — Prisma 8 contract and database configuration.
+
+### Phase 3 — Database and Domain Model
+
+1. `prisma/contract.prisma` — Traveller, Flight, Reminder, AuditLog, enums, and constraints.
+2. `prisma/contract.json` — generated contract artifact.
+3. `prisma/contract.d.ts` — generated query types.
+4. `migrations/app/*/migration.ts` — applied database changes in chronological directory order.
+5. `lib/db.ts` — Prisma 8 PostgreSQL runtime connection.
+
+### Phase 4 — Google Sheets Integration and Synchronization
+
+1. `lib/google-sheets.ts` — authenticated Sheet retrieval.
+2. `lib/google-sheets/mapping.ts` — live header definitions, raw mapping, empty/cancelled classification, and `Nil` ARRAYFORMULA boundary.
+3. `lib/google-sheets/normalize.ts` — header-based normalization of names, dates, times, layovers, and email.
+4. `lib/google-sheets/date-time.ts` — Sheet date/time parsing.
+5. `lib/sync-google-sheet.ts` — traveller, flight, reminder upserts and synchronization audit events.
+6. `scripts/sync-sheet.ts` — one-shot synchronization command and row summary.
+
+### Phase 5 — Validation and Data Quality
+
+1. `lib/google-sheets/validation/*` — field, date/time, route, layover, duplicate, and email validation rules.
+2. `prisma/contract.prisma` — validation issue model and indexes when schema changes are required.
+3. `migrations/app/*/migration.ts` — validation persistence migrations in chronological order.
+4. `lib/dashboard.ts` — server-side retrieval of validation and operational data.
+5. `app/dashboard-client.tsx` — validation issue presentation and filtering.
+6. `scripts/test-google-sheets.ts` — live Sheet validation checks.
+
+### Phase 6 — Reminder Calculation and Processing
+
+1. `lib/sync-google-sheet.ts` — deterministic `ADMIN - 48 hours` and `CLIENT - 24 hours` schedule creation.
+2. `lib/reminder-processing.ts` — due selection, conditional claiming, sending, retries, and status transitions.
+3. `scripts/process-reminders.ts` — one processing cycle and result reporting.
+4. `lib/dashboard.ts` — next pending/retryable reminder selection and detail projection.
+5. `app/dashboard-client.tsx` — upcoming reminder UI.
+
+### Phase 7 — Email and Operational Notifications
+
+1. `lib/email/resend.ts` — Resend API call, traveller email, administrator reminder, confirmation, and developer failure notification.
+2. `.env` — `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAILS`, and `DEVELOPER_EMAILS`.
+3. `scripts/process-reminders.ts` — controlled invocation of real email sending.
+4. `lib/reminder-processing.ts` — persistence of provider message IDs and send/failure audit events.
+
+### Phase 7b — Vercel Cron Automation
+
+1. `app/api/cron/reminders/route.ts` — authenticated production processing endpoint.
+2. `vercel.json` — five-minute Vercel Cron schedule.
+3. `.env.example` — `CRON_SECRET` and the complete environment contract.
+4. `README.md` — Vercel environment and Google Sheets write-access setup.
+
+### Phase 8 — Audit Logging
+
+1. `prisma/contract.prisma` — AuditLog model and event enum.
+2. `lib/sync-google-sheet.ts` — sync audit events.
+3. `lib/reminder-processing.ts` — due, sent, and failed reminder audit events.
+4. `lib/dashboard.ts` — audit log query and serialization.
+5. `app/dashboard-client.tsx` — audit log view.
+
+### Phase 9 — Dashboard and Application UI
+
+1. `app/page.tsx` — dynamic dashboard data loading.
+2. `lib/dashboard.ts` — raw Sheet snapshot, counts, flights, audits, and upcoming reminder.
+3. `app/dashboard-client.tsx` — Sheet-first table, upcoming reminder detail, metrics, traveller view, and audit view.
+4. `app/globals.css` — responsive tables, reminder panel, metrics, statuses, and mobile layout.
+
+### Phase 10 — Background Jobs and Operations
+
+1. `scripts/sync-sheet.ts` — synchronization worker entry point.
+2. `scripts/process-reminders.ts` — reminder worker entry point.
+3. `app/api/cron/reminders/route.ts` — Vercel Cron invocation and failure response.
+4. `vercel.json` — recurring schedule.
+5. `docker-compose.yml` — future local worker/scheduler service wiring.
+6. `README.md` — recurring command and deployment instructions.
+7. `lib/dashboard.ts` — future health and last-run status query.
+
+### Phase 11 — Testing and Delivery Workflow
+
+1. `scripts/test-google-sheets.ts` — current live integration check.
+2. `package.json` — test, lint, build, and CI scripts.
+3. `app/*` and `lib/*` — focused unit/integration test targets to add.
+4. `.github/workflows/*` — CI workflow to add.
+5. `PROJECT_CONTEXT.md` — milestone and workflow record.
+
+### Phase 12 — Production Deployment
+
+1. `Dockerfile` — production application image to add.
+2. `docker-compose.yml` — production-oriented service composition.
+3. `next.config.ts` — production build/runtime configuration.
+4. `.env.example` — documented non-secret environment contract to add.
+5. `prisma.config.ts` and `migrations/app/*` — production migration execution.
+6. `README.md` — deployment, secrets, HTTPS, monitoring, and rollback instructions.

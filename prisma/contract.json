@@ -19,10 +19,6 @@
     "traveller": {
       "model": "Traveller",
       "namespace": "public"
-    },
-    "validationIssue": {
-      "model": "ValidationIssue",
-      "namespace": "public"
     }
   },
   "domain": {
@@ -108,6 +104,10 @@
               {
                 "name": "CANCELLED",
                 "value": "CANCELLED"
+              },
+              {
+                "name": "SKIPPED",
+                "value": "SKIPPED"
               }
             ]
           },
@@ -715,127 +715,6 @@
               "namespaceId": "public",
               "table": "traveller"
             }
-          },
-          "ValidationIssue": {
-            "fields": {
-              "code": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "field": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "fingerprint": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "firstSeenAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "lastSeenAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "message": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "resolvedAt": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "severity": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "sheetRow": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "value": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {},
-            "storage": {
-              "fields": {
-                "code": {
-                  "column": "code"
-                },
-                "field": {
-                  "column": "field"
-                },
-                "fingerprint": {
-                  "column": "fingerprint"
-                },
-                "firstSeenAt": {
-                  "column": "firstSeenAt"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "lastSeenAt": {
-                  "column": "lastSeenAt"
-                },
-                "message": {
-                  "column": "message"
-                },
-                "resolvedAt": {
-                  "column": "resolvedAt"
-                },
-                "severity": {
-                  "column": "severity"
-                },
-                "sheetRow": {
-                  "column": "sheetRow"
-                },
-                "value": {
-                  "column": "value"
-                }
-              },
-              "namespaceId": "public",
-              "table": "validationIssue"
-            }
           }
         }
       }
@@ -1095,8 +974,8 @@
             "reminder": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED')",
-                  "name": "reminder_status_check_03803961",
+                  "expression": "\"status\" IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED', 'SKIPPED')",
+                  "name": "reminder_status_check_7116ce52",
                   "prefix": "reminder_status_check"
                 },
                 {
@@ -1300,112 +1179,6 @@
                   ]
                 }
               ]
-            },
-            "validationIssue": {
-              "columns": {
-                "code": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "field": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "fingerprint": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "firstSeenAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "lastSeenAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "message": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "resolvedAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "nativeType": "timestamptz",
-                  "nullable": true
-                },
-                "severity": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "sheetRow": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "value": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [
-                {
-                  "columns": [
-                    "resolvedAt"
-                  ],
-                  "name": "validationIssue_resolvedAt_idx_a13a9d8d",
-                  "prefix": "validationIssue_resolvedAt_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "severity"
-                  ],
-                  "name": "validationIssue_severity_idx_5b070f41",
-                  "prefix": "validationIssue_severity_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "sheetRow"
-                  ],
-                  "name": "validationIssue_sheetRow_idx_2c3c0125",
-                  "prefix": "validationIssue_sheetRow_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "fingerprint"
-                  ]
-                }
-              ]
             }
           },
           "valueSet": {
@@ -1434,7 +1207,8 @@
                 "PROCESSING",
                 "SENT",
                 "FAILED",
-                "CANCELLED"
+                "CANCELLED",
+                "SKIPPED"
               ]
             },
             "ReminderType": {
@@ -1450,10 +1224,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b86293baf2f47fc8bc6d672c427d22d7f1b39a5e8f640a70001e758c3cedc002"
+    "storageHash": "4a9ea83b4267d6eea3e1bce88ac21baac2c031550452c9e90ef30ea7c10ffbfe"
   },
   "execution": {
-    "executionHash": "e75189edb59f733dc8d3de531620845385523f4450aeb7ec585331620b475daa",
+    "executionHash": "96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1",
     "mutations": {
       "defaults": [
         {
@@ -1543,17 +1317,6 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "traveller"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "validationIssue"
           }
         }
       ]

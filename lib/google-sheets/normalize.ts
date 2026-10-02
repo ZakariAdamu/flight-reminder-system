@@ -15,18 +15,15 @@ export type NormalizedSheetRow = {
 	arrivalTime: string;
 
 	layoverCity: string;
+	layoverBeginsDate: string;
+	layoverEndsDate: string;
 	layoverBegins: string;
 	layoverEnds: string;
 	layoverDuration: string;
 
 	email: string;
-
-	/**
-	 * Original values from the Google Sheet.
-	 * These are preserved so validation issues can report
-	 * exactly what the user entered.
-	 */
-	raw: SheetRow;
+	flightStatus: string;
+	reminderStatus: string;
 };
 
 const value = (row: SheetRow, header: string): string =>
@@ -39,7 +36,7 @@ export function normalizeSheetRow(
 	return {
 		sheetRow,
 
-		name: value(row, "NAMES OF CLIENTS"),
+		name: value(row, "Name of  Clients") || value(row, "NAMES OF CLIENTS"),
 		location: value(row, "location"),
 		origin: value(row, "Origin"),
 		destination: value(row, "Destination"),
@@ -51,13 +48,16 @@ export function normalizeSheetRow(
 		arrivalTime: value(row, "Arrival Time"),
 
 		layoverCity: value(row, "Layover City"),
-		layoverBegins: value(row, "Layover Begins"),
-		layoverEnds: value(row, "Layover Ends"),
+		layoverBeginsDate: value(row, "Layover Start Date"),
+		layoverEndsDate: value(row, "Layover End Date"),
+		layoverBegins:
+			value(row, "Layover Start Time") || value(row, "Layover Begins"),
+		layoverEnds: value(row, "Layover End Time") || value(row, "Layover Ends"),
 		layoverDuration: value(row, "Layover Duration"),
 
-		email: value(row, "Email Address"),
-
-		raw: row,
+		email: value(row, "Client Email") || value(row, "Email Address"),
+		flightStatus: value(row, "Flight Status") || value(row, "Status"),
+		reminderStatus: value(row, "Reminder Status"),
 	};
 }
 

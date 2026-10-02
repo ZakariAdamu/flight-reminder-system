@@ -10,7 +10,8 @@ async function main() {
 	console.log(`Rows read: ${summary.rowsRead}`);
 	console.log(`Rows synced: ${summary.rowsSynced}`);
 	console.log(`Rows skipped: ${summary.rowsSkipped}`);
-	console.log(`Validation errors: ${summary.issuesFound}`);
+	console.log(`Empty rows: ${summary.emptyRows}`);
+	console.log(`Cancelled rows: ${summary.cancelledRows}`);
 	console.log(`Reminders created: ${summary.remindersCreated}`);
 
 	await db.close();

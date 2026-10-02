@@ -20,6 +20,9 @@
 # production
 /build
 
+# local database exports
+/local_data_dump.sql
+
 # misc
 .DS_Store
 *.pem
@@ -32,6 +35,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.development.local
+.env.local
 
 # vercel
 .vercel

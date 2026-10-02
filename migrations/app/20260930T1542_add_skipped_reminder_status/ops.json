@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dropCheckConstraint.reminder.reminder_status_check_03803961",
+    "label": "Drop check constraint \"reminder_status_check_03803961\" on \"reminder\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "reminder_status_check_03803961",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_status_check_03803961\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_status_check_03803961",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"reminder_status_check_03803961\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" DROP CONSTRAINT \"reminder_status_check_03803961\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_status_check_03803961\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_status_check_03803961",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.reminder.reminder_status_check_7116ce52",
+    "label": "Add check constraint \"reminder_status_check_7116ce52\" on \"reminder\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "reminder_status_check_7116ce52",
+        "table": "reminder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"reminder_status_check_7116ce52\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_status_check_7116ce52",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"reminder_status_check_7116ce52\"",
+        "sql": "ALTER TABLE \"public\".\"reminder\" ADD CONSTRAINT \"reminder_status_check_7116ce52\" CHECK (\"status\" IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED', 'SKIPPED'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"reminder_status_check_7116ce52\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "reminder_status_check_7116ce52",
+          "public",
+          "\"public\".\"reminder\""
+        ]
+      }
+    ]
+  }
+]

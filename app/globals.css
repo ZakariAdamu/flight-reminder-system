@@ -92,6 +92,113 @@ h1 {
   margin-bottom: 42px;
 }
 
+.sheet-source {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  margin-bottom: 42px;
+}
+
+.sheet-source-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  padding: 26px 24px 0;
+}
+
+.sheet-source h2 {
+  font-size: 28px;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+
+.section-subtitle {
+  color: var(--ink-muted);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.sheet-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.sheet-counts span {
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  font-size: 11px;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.upcoming-reminder {
+  background: #173d32;
+  color: #f4fbf4;
+  margin-bottom: 42px;
+  padding: 26px 24px;
+}
+
+.upcoming-reminder .eyebrow,
+.upcoming-reminder .section-subtitle,
+.upcoming-reminder small {
+  color: #b9d6c7;
+}
+
+.upcoming-reminder h2 {
+  font-size: 28px;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+
+.upcoming-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.upcoming-header .status {
+  background: transparent;
+}
+
+.upcoming-grid {
+  border-top: 1px solid #376653;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 24px;
+  padding-top: 20px;
+}
+
+.upcoming-grid strong,
+.upcoming-grid small,
+.detail-label {
+  display: block;
+}
+
+.upcoming-grid strong {
+  font-size: 16px;
+  margin: 8px 0 5px;
+}
+
+.detail-label {
+  color: #b9d6c7;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.upcoming-error {
+  border-top: 1px solid #7c5345;
+  color: #ffd1c5;
+  font-size: 12px;
+  margin: 20px 0 0;
+  padding-top: 16px;
+}
+
 .metric {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -200,6 +307,19 @@ table {
   border-collapse: collapse;
   min-width: 760px;
   width: 100%;
+}
+
+.sheet-table {
+  min-width: 1200px;
+}
+
+.sheet-table th {
+  white-space: nowrap;
+}
+
+.sheet-table td {
+  max-width: 240px;
+  white-space: nowrap;
 }
 
 th {
@@ -377,6 +497,29 @@ td span,
   .metric-grid {
     grid-template-columns: 1fr;
     margin-bottom: 28px;
+  }
+
+  .sheet-source-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 22px 16px 0;
+  }
+
+  .sheet-counts {
+    justify-content: flex-start;
+  }
+
+  .upcoming-reminder {
+    padding: 22px 16px;
+  }
+
+  .upcoming-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .upcoming-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .metric {

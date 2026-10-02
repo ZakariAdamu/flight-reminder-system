@@ -2,14 +2,15 @@ import "temporal-polyfill/full/global";
 import { Temporal } from "temporal-polyfill";
 import { randomUUID } from "node:crypto";
 
-import type { Timestamptz } from "@prisma/orm-postgres/target/codec-types";
-
 import { db } from "./db";
+import {
+	getSheetReminderStates,
+	updateSheetReminderStatus,
+} from "./google-sheets";
 
-const instant = (value: Temporal.Instant): Timestamptz =>
-	value as unknown as Timestamptz;
+const instant = (value: Temporal.Instant): Temporal.Instant => value;
 
-const now = (): Timestamptz =>
+const now = (): Temporal.Instant =>
 	instant(Temporal.Instant.fromEpochMilliseconds(Date.now()));
 
 const retryDelayMinutes = (attemptCount: number): number =>
@@ -23,13 +24,29 @@ export type ReminderToSend = {
 	travellerId: string;
 	travellerName: string;
 	travellerEmail: string;
+	origin: string;
+	destination: string;
+	departureAt: Date;
+	arrivalAt: Date | null;
+	layoverCity: string | null;
+	layoverBeginsAt: Date | null;
+	layoverEndsAt: Date | null;
+	layoverDuration: string | null;
 };
+
+type ReminderCandidate = Awaited<ReturnType<typeof dueReminders>>[number];
+type FlightRecord = NonNullable<
+	Awaited<ReturnType<typeof db.orm.public.Flight.first>>
+>;
+type TravellerRecord = NonNullable<
+	Awaited<ReturnType<typeof db.orm.public.Traveller.first>>
+>;
 
 export type ReminderSender = (
 	reminder: ReminderToSend,
 ) => Promise<{ providerMessageId?: string }>;
 
-async function dueReminders(at: Timestamptz) {
+async function dueReminders(at: Temporal.Instant) {
 	const pending = await db.orm.public.Reminder.where({ status: "PENDING" })
 		.where((reminder) => reminder.scheduledFor.lte(at))
 		.limit(100)
@@ -44,8 +61,98 @@ async function dueReminders(at: Timestamptz) {
 	return [...pending, ...retryable];
 }
 
+async function recoverStaleProcessing(at: Temporal.Instant): Promise<void> {
+	const staleBefore = Temporal.Instant.from(at).subtract({ minutes: 10 });
+	const stale = await db.orm.public.Reminder.where({ status: "PROCESSING" })
+		.where((reminder) => reminder.updatedAt.lte(staleBefore))
+		.limit(100)
+		.all();
+
+	for (const reminder of stale) {
+		await db.orm.public.Reminder.where({
+			id: reminder.id,
+			status: "PROCESSING",
+		}).update({
+			status: "FAILED",
+			failedAt: at,
+			nextAttemptAt: at,
+			errorMessage: "Recovered a stale processing claim.",
+			updatedAt: at,
+		});
+	}
+}
+
+async function loadReminderContext(candidate: ReminderCandidate): Promise<{
+	flight: FlightRecord;
+	traveller: TravellerRecord;
+} | null> {
+	const flight = await db.orm.public.Flight.first({ id: candidate.flightId });
+
+	if (!flight) {
+		return null;
+	}
+
+	const traveller = await db.orm.public.Traveller.first({
+		id: flight.travellerId,
+	});
+
+	return traveller ? { flight, traveller } : null;
+}
+
+async function markSkipped(
+	candidate: ReminderCandidate,
+	context: { flight: FlightRecord; traveller: TravellerRecord },
+): Promise<boolean> {
+	const timestamp = now();
+	const skipped = await db.orm.public.Reminder.where({
+		id: candidate.id,
+		status: candidate.status,
+	}).update({
+		status: "SKIPPED",
+		errorMessage: "Flight is cancelled in Google Sheets.",
+		updatedAt: timestamp,
+	});
+
+	if (!skipped) {
+		return false;
+	}
+
+	await db.orm.public.AuditLog.create({
+		id: randomUUID(),
+		travellerId: context.traveller.id,
+		reminderId: candidate.id,
+		eventType: "REMINDER_CANCELLED",
+		message: `${candidate.type} reminder skipped because the flight is cancelled.`,
+		metadata: null,
+		createdAt: timestamp,
+	});
+
+	return true;
+}
+
+async function markUnavailable(
+	candidate: ReminderCandidate,
+	errorMessage: string,
+	at: Temporal.Instant,
+): Promise<boolean> {
+	const updated = await db.orm.public.Reminder.where({
+		id: candidate.id,
+		status: candidate.status,
+	}).update({
+		status: "FAILED",
+		failedAt: at,
+		nextAttemptAt: at,
+		errorMessage,
+		updatedAt: at,
+	});
+
+	return Boolean(updated);
+}
+
 async function claimReminder(
-	reminder: Awaited<ReturnType<typeof dueReminders>>[number],
+	reminder: ReminderCandidate,
+	flight: FlightRecord,
+	traveller: TravellerRecord,
 ): Promise<ReminderToSend | null> {
 	const timestamp = now();
 	const claimed = await db.orm.public.Reminder.where({
@@ -59,20 +166,6 @@ async function claimReminder(
 	});
 
 	if (!claimed) {
-		return null;
-	}
-
-	const flight = await db.orm.public.Flight.first({ id: reminder.flightId });
-
-	if (!flight) {
-		return null;
-	}
-
-	const traveller = await db.orm.public.Traveller.first({
-		id: flight.travellerId,
-	});
-
-	if (!traveller) {
 		return null;
 	}
 
@@ -95,20 +188,92 @@ async function claimReminder(
 		travellerId: traveller.id,
 		travellerName: traveller.name,
 		travellerEmail: traveller.email,
+		origin: flight.origin,
+		destination: flight.destination,
+		departureAt: flight.departureAt,
+		arrivalAt: flight.arrivalAt,
+		layoverCity: flight.layoverCity,
+		layoverBeginsAt: flight.layoverBeginsAt,
+		layoverEndsAt: flight.layoverEndsAt,
+		layoverDuration: flight.layoverDuration,
 	};
 }
 
 export async function processDueReminders(
 	sender: ReminderSender,
-	at: Timestamptz = now(),
-): Promise<{ claimed: number; sent: number; failed: number }> {
+	at: Temporal.Instant = now(),
+): Promise<{
+	claimed: number;
+	sent: number;
+	failed: number;
+	skipped: number;
+	sheetStatusFailures: number;
+}> {
+	await recoverStaleProcessing(at);
+	const sheetStates = await getSheetReminderStates();
 	const due = await dueReminders(at);
 	let claimed = 0;
 	let sent = 0;
 	let failed = 0;
+	let skipped = 0;
+	let sheetStatusFailures = 0;
 
 	for (const candidate of due) {
-		const reminder = await claimReminder(candidate);
+		const context = await loadReminderContext(candidate);
+
+		if (!context) {
+			if (
+				await markUnavailable(
+					candidate,
+					"Flight or traveller record is missing.",
+					at,
+				)
+			) {
+				failed += 1;
+			}
+			continue;
+		}
+
+		const sheetState = sheetStates.get(context.flight.sheetRow);
+
+		if (!sheetState) {
+			if (
+				await markUnavailable(
+					candidate,
+					`Google Sheet row ${context.flight.sheetRow} could not be verified.`,
+					at,
+				)
+			) {
+				failed += 1;
+			}
+			continue;
+		}
+
+		if (sheetState.flightStatus.trim().toLowerCase() === "cancelled") {
+			if (await markSkipped(candidate, context)) {
+				skipped += 1;
+				try {
+					await updateSheetReminderStatus(
+						context.flight.sheetRow,
+						candidate.type,
+						"SKIPPED",
+					);
+				} catch (error) {
+					sheetStatusFailures += 1;
+					console.error(
+						"Could not write skipped status to Google Sheets:",
+						error,
+					);
+				}
+			}
+			continue;
+		}
+
+		const reminder = await claimReminder(
+			candidate,
+			context.flight,
+			context.traveller,
+		);
 
 		if (!reminder) {
 			continue;
@@ -142,6 +307,17 @@ export async function processDueReminders(
 				createdAt: timestamp,
 			});
 
+			try {
+				await updateSheetReminderStatus(
+					context.flight.sheetRow,
+					reminder.type,
+					"SENT",
+				);
+			} catch (error) {
+				sheetStatusFailures += 1;
+				console.error("Could not write sent status to Google Sheets:", error);
+			}
+
 			sent += 1;
 		} catch (error) {
 			const timestamp = now();
@@ -169,9 +345,23 @@ export async function processDueReminders(
 				createdAt: timestamp,
 			});
 
+			try {
+				await updateSheetReminderStatus(
+					context.flight.sheetRow,
+					reminder.type,
+					"FAILED",
+				);
+			} catch (sheetError) {
+				sheetStatusFailures += 1;
+				console.error(
+					"Could not write failed status to Google Sheets:",
+					sheetError,
+				);
+			}
+
 			failed += 1;
 		}
 	}
 
-	return { claimed, sent, failed };
+	return { claimed, sent, failed, skipped, sheetStatusFailures };
 }

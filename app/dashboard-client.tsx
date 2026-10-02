@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import type { DashboardData } from "../lib/dashboard";
 
-type View = "travellers" | "issues" | "audit";
+type View = "travellers" | "audit";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 	day: "2-digit",
@@ -25,9 +25,14 @@ function statusClass(status: string) {
 export function DashboardClient({ data }: { data: DashboardData }) {
 	const [view, setView] = useState<View>("travellers");
 	const [search, setSearch] = useState("");
-	const [severity, setSeverity] = useState("ALL");
-
 	const searchTerm = search.trim().toLowerCase();
+	const filteredSheetRows = useMemo(
+		() =>
+			data.sheet.rows.filter((row) =>
+				row.join(" ").toLowerCase().includes(searchTerm),
+			),
+		[data.sheet.rows, searchTerm],
+	);
 	const filteredFlights = useMemo(
 		() =>
 			data.flights.filter((flight) =>
@@ -44,20 +49,6 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 			),
 		[data.flights, searchTerm],
 	);
-	const filteredIssues = data.validationIssues.filter(
-		(issue) =>
-			(severity === "ALL" || issue.severity === severity) &&
-			[issue.message, issue.code, issue.field ?? "", String(issue.sheetRow)]
-				.join(" ")
-				.toLowerCase()
-				.includes(searchTerm),
-	);
-	const errorCount = data.validationIssues.filter(
-		(issue) => issue.severity === "ERROR",
-	).length;
-	const warningCount = data.validationIssues.filter(
-		(issue) => issue.severity === "WARNING",
-	).length;
 	const failedReminders = data.flights.reduce(
 		(total, flight) =>
 			total +
@@ -82,6 +73,37 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 				</div>
 			</header>
 
+			<section className="sheet-source" aria-labelledby="sheet-heading">
+				<div className="sheet-source-header">
+					<div>
+						<p className="eyebrow">Source of truth</p>
+						<h2 id="sheet-heading">Google Sheets records</h2>
+						<p className="section-subtitle">
+							Raw rows are shown before synchronization and reminder
+							calculations.
+						</p>
+					</div>
+					<div className="sheet-counts" aria-label="Sheet row counts">
+						<span>{data.sheet.rows.length} rows</span>
+						<span>{data.sheet.emptyRows} empty</span>
+						<span>{data.sheet.cancelledRows} cancelled</span>
+					</div>
+				</div>
+				<div className="toolbar">
+					<label className="search-box">
+						<span className="sr-only">Search Sheet rows</span>
+						<input
+							value={search}
+							onChange={(event) => setSearch(event.target.value)}
+							placeholder="Search Sheet rows"
+						/>
+					</label>
+				</div>
+				<SheetView headers={data.sheet.headers} rows={filteredSheetRows} />
+			</section>
+
+			<UpcomingReminder reminder={data.upcomingReminder} />
+
 			<section className="metric-grid" aria-label="System summary">
 				<div className="metric metric-primary">
 					<span>Flights tracked</span>
@@ -89,11 +111,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 					<small>Latest synchronized records</small>
 				</div>
 				<div className="metric">
-					<span>Open issues</span>
-					<strong>{data.validationIssues.length}</strong>
-					<small>
-						{errorCount} errors / {warningCount} warnings
-					</small>
+					<span>Audit events</span>
+					<strong>{data.auditLogs.length}</strong>
+					<small>Recent operational history</small>
 				</div>
 				<div className="metric">
 					<span>Reminder failures</span>
@@ -106,17 +126,13 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
 			<section className="workspace">
 				<nav className="view-tabs" aria-label="Dashboard views">
-					{(["travellers", "issues", "audit"] as const).map((tab) => (
+					{(["travellers", "audit"] as const).map((tab) => (
 						<button
 							className={view === tab ? "tab-active" : ""}
 							key={tab}
 							onClick={() => setView(tab)}
 						>
-							{tab === "travellers"
-								? "Travellers & flights"
-								: tab === "issues"
-									? `Validation issues (${data.validationIssues.length})`
-									: "Audit log"}
+							{tab === "travellers" ? "Travellers & flights" : "Audit log"}
 						</button>
 					))}
 				</nav>
@@ -126,32 +142,108 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 						<input
 							value={search}
 							onChange={(event) => setSearch(event.target.value)}
-							placeholder={
-								view === "issues"
-									? "Search issues, codes, or rows"
-									: "Search travellers, routes, or rows"
-							}
+							placeholder="Search travellers, routes, or rows"
 						/>
 					</label>
-					{view === "issues" && (
-						<select
-							value={severity}
-							onChange={(event) => setSeverity(event.target.value)}
-							aria-label="Filter validation severity"
-						>
-							<option value="ALL">All severities</option>
-							<option value="ERROR">Errors</option>
-							<option value="WARNING">Warnings</option>
-							<option value="INFO">Info</option>
-						</select>
-					)}
 				</div>
 
 				{view === "travellers" && <TravellerView flights={filteredFlights} />}
-				{view === "issues" && <IssuesView issues={filteredIssues} />}
 				{view === "audit" && <AuditView logs={data.auditLogs} />}
 			</section>
 		</main>
+	);
+}
+
+function UpcomingReminder({
+	reminder,
+}: {
+	reminder: DashboardData["upcomingReminder"];
+}) {
+	if (!reminder) {
+		return (
+			<section className="upcoming-reminder" aria-labelledby="upcoming-heading">
+				<div>
+					<p className="eyebrow">Next operation</p>
+					<h2 id="upcoming-heading">Upcoming reminder</h2>
+					<p className="section-subtitle">
+						No pending or retryable reminders are waiting to be processed.
+					</p>
+				</div>
+			</section>
+		);
+	}
+
+	return (
+		<section className="upcoming-reminder" aria-labelledby="upcoming-heading">
+			<div className="upcoming-header">
+				<div>
+					<p className="eyebrow">Next operation</p>
+					<h2 id="upcoming-heading">Upcoming reminder</h2>
+				</div>
+				<span className={statusClass(reminder.status)}>
+					{reminder.type} · {reminder.status}
+				</span>
+			</div>
+			<div className="upcoming-grid">
+				<div>
+					<span className="detail-label">Process at</span>
+					<strong>{formatDate(reminder.processAt)}</strong>
+					<small>Scheduled for {formatDate(reminder.scheduledFor)}</small>
+				</div>
+				<div>
+					<span className="detail-label">Traveller</span>
+					<strong>{reminder.traveller.name}</strong>
+					<small>{reminder.traveller.email}</small>
+				</div>
+				<div>
+					<span className="detail-label">Flight</span>
+					<strong>
+						{reminder.flight.origin} <span className="route-arrow">→</span>{" "}
+						{reminder.flight.destination}
+					</strong>
+					<small>Sheet row #{reminder.flight.sheetRow}</small>
+				</div>
+				<div>
+					<span className="detail-label">Attempts</span>
+					<strong>{reminder.attemptCount}</strong>
+					<small>{reminder.reminderId}</small>
+				</div>
+			</div>
+			{reminder.errorMessage && (
+				<p className="upcoming-error">Last error: {reminder.errorMessage}</p>
+			)}
+		</section>
+	);
+}
+
+function SheetView({ headers, rows }: { headers: string[]; rows: string[][] }) {
+	return (
+		<div className="table-wrap">
+			<table className="sheet-table">
+				<thead>
+					<tr>
+						{headers.map((header) => (
+							<th key={header}>{header}</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{rows.map((row, rowIndex) => (
+						<tr key={`${rowIndex}-${row.join("|")}`}>
+							{headers.map((header, columnIndex) => (
+								<td key={`${header}-${columnIndex}`}>{row[columnIndex]}</td>
+							))}
+						</tr>
+					))}
+					{rows.length === 0 && (
+						<EmptyRow
+							colSpan={Math.max(headers.length, 1)}
+							message="No Sheet rows match this search."
+						/>
+					)}
+				</tbody>
+			</table>
+		</div>
 	);
 }
 
@@ -207,50 +299,6 @@ function TravellerView({ flights }: { flights: DashboardData["flights"] }) {
 	);
 }
 
-function IssuesView({ issues }: { issues: DashboardData["validationIssues"] }) {
-	return (
-		<div className="table-wrap">
-			<table>
-				<thead>
-					<tr>
-						<th>Severity</th>
-						<th>Sheet row</th>
-						<th>Field</th>
-						<th>Issue</th>
-						<th>First detected</th>
-					</tr>
-				</thead>
-				<tbody>
-					{issues.map((issue) => (
-						<tr key={issue.id}>
-							<td>
-								<span
-									className={`severity severity-${issue.severity.toLowerCase()}`}
-								>
-									{issue.severity}
-								</span>
-							</td>
-							<td>#{issue.sheetRow}</td>
-							<td>{issue.field ?? "General"}</td>
-							<td>
-								<strong>{issue.code}</strong>
-								<span>
-									{issue.message}
-									{issue.value ? ` Value: ${issue.value}` : ""}
-								</span>
-							</td>
-							<td className="muted">{formatDate(issue.firstSeenAt)}</td>
-						</tr>
-					))}
-					{issues.length === 0 && (
-						<EmptyRow message="No open validation issues match this filter." />
-					)}
-				</tbody>
-			</table>
-		</div>
-	);
-}
-
 function AuditView({ logs }: { logs: DashboardData["auditLogs"] }) {
 	return (
 		<div className="audit-list">
@@ -277,10 +325,16 @@ function AuditView({ logs }: { logs: DashboardData["auditLogs"] }) {
 	);
 }
 
-function EmptyRow({ message }: { message: string }) {
+function EmptyRow({
+	message,
+	colSpan = 5,
+}: {
+	message: string;
+	colSpan?: number;
+}) {
 	return (
 		<tr>
-			<td className="empty-cell" colSpan={5}>
+			<td className="empty-cell" colSpan={colSpan}>
 				{message}
 			</td>
 		</tr>
