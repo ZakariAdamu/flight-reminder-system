@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4a9ea83b4267d6eea3e1bce88ac21baac2c031550452c9e90ef30ea7c10ffbfe'>;
+  StorageHashBase<'e7507f73b4738f34d2ac29a3cebd9a7395d0b0da176e595d74cbf761c357965a'>;
 export type ExecutionHash =
   ExecutionHashBase<'96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1'>;
 export type ProfileHash =
@@ -285,7 +285,7 @@ export type FieldOutputTypes = {
       readonly flightId: CodecTypes['pg/text@1']['output'];
       readonly type: 'ADMIN' | 'CLIENT';
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED' | 'SKIPPED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED';
       readonly attemptCount: CodecTypes['pg/int4@1']['output'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly failedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
@@ -350,7 +350,7 @@ export type FieldInputTypes = {
       readonly flightId: CodecTypes['pg/text@1']['input'];
       readonly type: 'ADMIN' | 'CLIENT';
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED' | 'SKIPPED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED';
       readonly attemptCount: CodecTypes['pg/int4@1']['input'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly failedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
@@ -421,7 +421,7 @@ export type StorageColumnTypes = {
       readonly reminderId: CodecTypes['pg/text@1']['output'];
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
-      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED' | 'SKIPPED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED';
       readonly type: 'ADMIN' | 'CLIENT';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -486,7 +486,7 @@ export type StorageColumnInputTypes = {
       readonly reminderId: CodecTypes['pg/text@1']['input'];
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
-      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED' | 'SKIPPED';
+      readonly status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED';
       readonly type: 'ADMIN' | 'CLIENT';
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -537,7 +537,7 @@ export namespace Models {
     flightId: CodecTypes['pg/text@1']['output'];
     type: 'ADMIN' | 'CLIENT';
     scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED' | 'SKIPPED';
+    status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED';
     attemptCount: CodecTypes['pg/int4@1']['output'];
     sentAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     failedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
@@ -963,14 +963,7 @@ type ContractBase = Omit<
             };
             readonly ReminderStatus: {
               readonly kind: 'valueSet';
-              readonly values: readonly [
-                'PENDING',
-                'PROCESSING',
-                'SENT',
-                'FAILED',
-                'CANCELLED',
-                'SKIPPED',
-              ];
+              readonly values: readonly ['PENDING', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED'];
             };
             readonly ReminderType: {
               readonly kind: 'valueSet';
@@ -1398,7 +1391,6 @@ type ContractBase = Omit<
               { readonly name: 'SENT'; readonly value: 'SENT' },
               { readonly name: 'FAILED'; readonly value: 'FAILED' },
               { readonly name: 'CANCELLED'; readonly value: 'CANCELLED' },
-              { readonly name: 'SKIPPED'; readonly value: 'SKIPPED' },
             ];
           };
           readonly AuditEventType: {

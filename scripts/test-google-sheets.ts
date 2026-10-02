@@ -1,10 +1,7 @@
 import "dotenv/config";
 
 import { getSheetValues } from "../lib/google-sheets";
-import {
-	rowsToRecords,
-	validateSheetHeaders,
-} from "../lib/google-sheets/mapping";
+import { rowsToRecords } from "../lib/google-sheets/mapping";
 import { normalizeSheetRows } from "../lib/google-sheets/normalize";
 
 async function main() {
@@ -18,8 +15,6 @@ async function main() {
 	}
 
 	const [headers, ...rows] = values;
-
-	validateSheetHeaders(headers);
 
 	const records = rowsToRecords(headers, rows);
 	const normalizedRows = normalizeSheetRows(records);

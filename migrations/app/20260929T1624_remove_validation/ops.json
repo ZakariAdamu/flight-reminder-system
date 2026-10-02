@@ -1,0 +1,39 @@
+[
+  {
+    "id": "dropTable.validationIssue",
+    "label": "Drop table \"validationIssue\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "validationIssue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"validationIssue\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"validationIssue\"",
+        "sql": "DROP TABLE \"public\".\"validationIssue\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"validationIssue\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"validationIssue\""
+        ]
+      }
+    ]
+  }
+]

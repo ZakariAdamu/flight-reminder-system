@@ -33,12 +33,6 @@ export function parseSheetDate(value: string): Date | null {
 		return null;
 	}
 
-	/**
-	 * Expected current Sheet format:
-	 * "10 August 2026"
-	 *
-	 * We intentionally do not silently accept arbitrary date formats.
-	 */
 	const match = /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/.exec(trimmed);
 
 	if (!match) {
@@ -47,7 +41,6 @@ export function parseSheetDate(value: string): Date | null {
 
 	const day = Number(match[1]);
 	const year = Number(match[3]);
-
 	const monthNames = [
 		"january",
 		"february",
@@ -62,7 +55,6 @@ export function parseSheetDate(value: string): Date | null {
 		"november",
 		"december",
 	];
-
 	const month = monthNames.indexOf(match[2].toLowerCase());
 
 	if (month === -1) {

@@ -1,4 +1,5 @@
 import type { ReminderSender, ReminderToSend } from "../reminder-processing";
+import { flightReminderTemplate } from "./flight-reminder-template";
 
 const resendEndpoint = "https://api.resend.com/emails";
 
@@ -28,6 +29,7 @@ async function sendEmail(input: {
 	cc?: string[];
 	subject: string;
 	text: string;
+	html?: string;
 }): Promise<ResendResponse> {
 	const response = await fetch(resendEndpoint, {
 		method: "POST",
@@ -41,6 +43,7 @@ async function sendEmail(input: {
 			...(input.cc?.length ? { cc: input.cc } : {}),
 			subject: input.subject,
 			text: input.text,
+			...(input.html ? { html: input.html } : {}),
 		}),
 	});
 
@@ -53,24 +56,23 @@ async function sendEmail(input: {
 }
 
 function reminderContent(reminder: ReminderToSend) {
-	if (reminder.type === "ADMIN") {
-		return {
-			subject: `Flight reminder due for ${reminder.travellerName}`,
-			text: [
-				`A flight reminder is due for ${reminder.travellerName}.`,
-				`Traveller email: ${reminder.travellerEmail}`,
-				`Reminder ID: ${reminder.reminderId}`,
-			].join("\n"),
-		};
-	}
+	const timing = reminder.type === "ADMIN" ? "48hrs" : "24hrs";
 
 	return {
-		subject: "Your flight reminder",
-		text: [
-			`Hello ${reminder.travellerName},`,
-			"This is your scheduled flight reminder.",
-			`Reminder ID: ${reminder.reminderId}`,
-		].join("\n"),
+		subject: `${timing} flight reminder for ${reminder.travellerName}`,
+		text: `Hello ${reminder.travellerName},\n\nYour flight reminder is ready.`,
+		html: flightReminderTemplate({
+			clientName: reminder.travellerName,
+			email: reminder.travellerEmail,
+			origin: reminder.origin,
+			destination: reminder.destination,
+			departureAt: reminder.departureAt,
+			arrivalAt: reminder.arrivalAt ?? reminder.departureAt,
+			layoverCity: reminder.layoverCity,
+			layoverBeginsAt: reminder.layoverBeginsAt,
+			layoverEndsAt: reminder.layoverEndsAt,
+			layoverDuration: reminder.layoverDuration,
+		}),
 	};
 }
 
@@ -83,23 +85,8 @@ export function createResendReminderSender(): ReminderSender {
 			cc: reminder.type === "CLIENT" ? admins : undefined,
 			subject: content.subject,
 			text: content.text,
+			html: content.html,
 		});
-
-		if (reminder.type === "CLIENT") {
-			try {
-				await sendEmail({
-					to: admins,
-					subject: `Client reminder sent: ${reminder.travellerName}`,
-					text: [
-						`The client reminder for ${reminder.travellerName} was submitted successfully.`,
-						`Traveller email: ${reminder.travellerEmail}`,
-						`Provider message ID: ${result.id ?? "unknown"}`,
-					].join("\n"),
-				});
-			} catch (error) {
-				console.error("Could not send administrator confirmation:", error);
-			}
-		}
 
 		return { providerMessageId: result.id };
 	};
