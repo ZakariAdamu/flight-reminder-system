@@ -71,6 +71,7 @@ function reminderTime(
 
 function usableFlightRow(row: NormalizedSheetRow): boolean {
 	return Boolean(
+		row.sheetNumber !== null &&
 		row.name &&
 		row.email &&
 		row.origin &&
@@ -83,15 +84,17 @@ function usableFlightRow(row: NormalizedSheetRow): boolean {
 }
 
 async function upsertTraveller(row: NormalizedSheetRow) {
-	const existing = await db.orm.public.Traveller.where({
-		email: row.email,
-	}).first();
+	const existing = await db.orm.public.Traveller.where({ name: row.name })
+		.where({ email: row.email })
+		.where({ sheetNumber: row.sheetNumber })
+		.first();
 	const timestamp = now();
 
 	if (existing) {
-		await db.orm.public.Traveller.where({ email: row.email }).update({
+		await db.orm.public.Traveller.where({ id: existing.id }).update({
 			name: row.name,
 			location: row.location || null,
+			sheetNumber: row.sheetNumber,
 			updatedAt: timestamp,
 		});
 
@@ -103,6 +106,7 @@ async function upsertTraveller(row: NormalizedSheetRow) {
 		name: row.name,
 		location: row.location || null,
 		email: row.email,
+		sheetNumber: row.sheetNumber,
 		createdAt: timestamp,
 		updatedAt: timestamp,
 	});
@@ -215,6 +219,22 @@ async function recordAudit(
 	});
 }
 
+async function removeFlightsOutsideSheet(activeSheetRows: Set<number>) {
+	const flights = await db.orm.public.Flight.all();
+	let removed = 0;
+
+	for (const flight of flights) {
+		if (activeSheetRows.has(flight.sheetRow)) {
+			continue;
+		}
+
+		await db.orm.public.Flight.where({ id: flight.id }).delete();
+		removed += 1;
+	}
+
+	return removed;
+}
+
 export type SyncSummary = {
 	rowsRead: number;
 	rowsSynced: number;
@@ -243,6 +263,7 @@ export async function syncGoogleSheet(): Promise<SyncSummary> {
 	const rows = nilBoundary === -1 ? allRows : allRows.slice(0, nilBoundary);
 	const records = rowsToRecords(headers, rows);
 	const normalizedRows = normalizeSheetRows(records, 2);
+	const activeSheetRows = new Set(rows.map((_, index) => index + 2));
 
 	let rowsSynced = 0;
 	let rowsSkipped = 0;
@@ -306,6 +327,8 @@ export async function syncGoogleSheet(): Promise<SyncSummary> {
 
 		rowsSynced += 1;
 	}
+
+	await removeFlightsOutsideSheet(activeSheetRows);
 
 	return {
 		rowsRead: normalizedRows.length,

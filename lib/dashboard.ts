@@ -6,6 +6,11 @@ import {
 	isNilOnlySheetRow,
 	rowsToRecords,
 } from "./google-sheets/mapping";
+import {
+	buildReminderWindowReport,
+	currentMonthWindow,
+	nextDaysWindow,
+} from "./reminder-reports";
 
 function serializeDate(value: unknown): string {
 	return String(value);
@@ -26,6 +31,7 @@ function reminderProcessTime(reminder: {
 
 export async function getDashboardData() {
 	await ensureDatabaseConnection();
+	const reportNow = new Date();
 
 	const [flights, auditLogs, sheetValues] = await Promise.all([
 		db.orm.public.Flight.include("traveller")
@@ -44,15 +50,18 @@ export async function getDashboardData() {
 	]);
 
 	const [pendingReminders, retryableReminders] = await Promise.all([
-		db.orm.public.Reminder.where({ status: "PENDING" }).limit(100).all(),
+		db.orm.public.Reminder.where({ status: "PENDING" }).all(),
 		db.orm.public.Reminder.where({ status: "FAILED" })
 			.where((reminder) => reminder.nextAttemptAt.isNotNull())
-			.limit(100)
 			.all(),
 	]);
-	const nextReminder = [...pendingReminders, ...retryableReminders].sort(
-		(first, second) => reminderProcessTime(first) - reminderProcessTime(second),
-	)[0];
+	const nextReminder = [...pendingReminders, ...retryableReminders]
+		.filter((reminder) => reminderProcessTime(reminder) > reportNow.getTime())
+		.sort(
+			(first, second) =>
+				reminderProcessTime(first) - reminderProcessTime(second),
+		)
+		.at(0);
 	const nextReminderFlight = nextReminder
 		? await db.orm.public.Flight.first({ id: nextReminder.flightId })
 		: null;
@@ -70,6 +79,8 @@ export async function getDashboardData() {
 	const sheetRowsForDisplay = sheetRows.map((row) =>
 		sheetHeaders.map((_, index) => String(row[index] ?? "")),
 	);
+	const [monthStart, monthEnd] = currentMonthWindow(reportNow);
+	const [next30DaysStart, next30DaysEnd] = nextDaysWindow(reportNow, 0, 30);
 
 	return {
 		sheet: {
@@ -112,6 +123,14 @@ export async function getDashboardData() {
 						},
 					}
 				: null,
+		reminderReports: {
+			currentMonth: buildReminderWindowReport(flights, monthStart, monthEnd),
+			next30Days: buildReminderWindowReport(
+				flights,
+				next30DaysStart,
+				next30DaysEnd,
+			),
+		},
 		flights: flights.map((flight) => ({
 			id: flight.id,
 			sheetRow: flight.sheetRow,

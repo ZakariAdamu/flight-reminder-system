@@ -66,8 +66,22 @@ export async function getSheetReminderStates(): Promise<
 export async function updateSheetReminderStatus(
 	sheetRow: number,
 	reminderType: "ADMIN" | "CLIENT",
-	status: "SENT" | "FAILED" | "SKIPPED",
+	status: "PENDING" | "SENT" | "FAILED" | "SKIPPED",
 ): Promise<void> {
+	await updateSheetReminderStatuses([{ sheetRow, reminderType, status }]);
+}
+
+export async function updateSheetReminderStatuses(
+	updates: Array<{
+		sheetRow: number;
+		reminderType: "ADMIN" | "CLIENT";
+		status: "PENDING" | "SENT" | "FAILED" | "SKIPPED";
+	}>,
+): Promise<void> {
+	if (updates.length === 0) {
+		return;
+	}
+
 	const values = await getSheetValues();
 	const [headers = [], ...allRows] = values;
 	const nilBoundary = allRows.findIndex(isNilOnlySheetRow);
@@ -78,26 +92,76 @@ export async function updateSheetReminderStatus(
 		throw new Error('Google Sheet is missing the "Reminder Status" header.');
 	}
 
-	if (sheetRow < 2 || sheetRow > rows.length + 1) {
-		throw new Error(`Google Sheet row ${sheetRow} is outside the data range.`);
+	const entriesByRow = new Map<number, string>();
+	for (const update of updates) {
+		if (update.sheetRow < 2 || update.sheetRow > rows.length + 1) {
+			throw new Error(
+				`Google Sheet row ${update.sheetRow} is outside the data range.`,
+			);
+		}
+
+		const currentValue = rows[update.sheetRow - 2]?.[reminderColumn] ?? "";
+		const entries = (entriesByRow.get(update.sheetRow) ?? currentValue)
+			.split(";")
+			.map((entry: string) => entry.trim())
+			.filter(
+				(entry: string) =>
+					entry && !entry.toUpperCase().startsWith(`${update.reminderType} `),
+			);
+		entries.push(`${update.reminderType} ${update.status}`);
+		entriesByRow.set(update.sheetRow, entries.join("; "));
 	}
 
-	const currentValue = rows[sheetRow - 2]?.[reminderColumn] ?? "";
-	const statusEntry = `${reminderType} ${status}`;
-	const entries = currentValue
-		.split(";")
-		.map((entry: string) => entry.trim())
-		.filter(
-			(entry: string) =>
-				entry && !entry.toUpperCase().startsWith(`${reminderType} `),
-		);
-	entries.push(statusEntry);
-
-	await sheets.spreadsheets.values.update({
+	const spreadsheet = await sheets.spreadsheets.get({
 		spreadsheetId,
-		range: `${sheetName}!${columnName(reminderColumn + 1)}${sheetRow}`,
-		valueInputOption: "RAW",
-		requestBody: { values: [[entries.join("; ")]] },
+		fields: "sheets.properties",
+	});
+	const sheet = spreadsheet.data.sheets?.find(
+		(item) => item.properties?.title === sheetName,
+	);
+	const sheetId = sheet?.properties?.sheetId;
+
+	if (sheetId === undefined) {
+		throw new Error(`Google Sheet tab "${sheetName}" could not be found.`);
+	}
+
+	const backgroundColors = {
+		PENDING: { red: 1, green: 0.95, blue: 0.65 },
+		SENT: { red: 0.72, green: 0.9, blue: 0.72 },
+		FAILED: { red: 1, green: 0.75, blue: 0.75 },
+		SKIPPED: { red: 0.85, green: 0.85, blue: 0.85 },
+	};
+
+	await sheets.spreadsheets.batchUpdate({
+		spreadsheetId,
+		requestBody: {
+			requests: updates.map((update) => ({
+				updateCells: {
+					range: {
+						sheetId,
+						startRowIndex: update.sheetRow - 1,
+						endRowIndex: update.sheetRow,
+						startColumnIndex: reminderColumn,
+						endColumnIndex: reminderColumn + 1,
+					},
+					rows: [
+						{
+							values: [
+								{
+									userEnteredValue: {
+										stringValue: entriesByRow.get(update.sheetRow) ?? "",
+									},
+									userEnteredFormat: {
+										backgroundColor: backgroundColors[update.status],
+									},
+								},
+							],
+						},
+					],
+					fields: "userEnteredValue,userEnteredFormat.backgroundColor",
+				},
+			})),
+		},
 	});
 }
 
@@ -106,18 +170,9 @@ function sheetValue(
 	primaryHeader: string,
 	legacyHeader?: string,
 ): string {
-	return (record[primaryHeader] ?? (legacyHeader ? record[legacyHeader] : "") ?? "").trim();
-}
-
-function columnName(columnNumber: number): string {
-	let name = "";
-	let number = columnNumber;
-
-	while (number > 0) {
-		const remainder = (number - 1) % 26;
-		name = String.fromCharCode(65 + remainder) + name;
-		number = Math.floor((number - 1) / 26);
-	}
-
-	return name;
+	return (
+		record[primaryHeader] ??
+		(legacyHeader ? record[legacyHeader] : "") ??
+		""
+	).trim();
 }

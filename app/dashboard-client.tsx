@@ -12,10 +12,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 	year: "numeric",
 	hour: "2-digit",
 	minute: "2-digit",
+	hour12: true,
 });
 
 function formatDate(value: string) {
-	return dateFormatter.format(new Date(value));
+	return dateFormatter
+		.format(new Date(value))
+		.replace(/\b(am|pm)\b/gi, (period) => period.toUpperCase());
 }
 
 function statusClass(status: string) {
@@ -103,6 +106,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 			</section>
 
 			<UpcomingReminder reminder={data.upcomingReminder} />
+			<ReminderReports reports={data.reminderReports} />
 
 			<section className="metric-grid" aria-label="System summary">
 				<div className="metric metric-primary">
@@ -213,6 +217,101 @@ function UpcomingReminder({
 				<p className="upcoming-error">Last error: {reminder.errorMessage}</p>
 			)}
 		</section>
+	);
+}
+
+function ReminderReports({
+	reports,
+}: {
+	reports: DashboardData["reminderReports"];
+}) {
+	return (
+		<section className="reminder-reports" aria-labelledby="reports-heading">
+			<div className="reminder-reports-header">
+				<div>
+					<p className="eyebrow">Planning horizon</p>
+					<h2 id="reports-heading">Reminder due windows</h2>
+					<p className="section-subtitle">
+						Scheduled reminders grouped by calendar month and the next 30 days.
+					</p>
+				</div>
+			</div>
+			<div className="reminder-report-grid">
+				<ReminderReportCard
+					label="Current month"
+					report={reports.currentMonth}
+				/>
+				<ReminderReportCard label="Next 30 days" report={reports.next30Days} />
+			</div>
+			<div className="table-wrap">
+				<table className="reminder-report-table">
+					<thead>
+						<tr>
+							<th>Due</th>
+							<th>Type</th>
+							<th>Traveller</th>
+							<th>Route</th>
+							<th>Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						{reports.next30Days.reminders.map((reminder) => (
+							<tr key={reminder.id}>
+								<td>{formatDate(reminder.scheduledFor)}</td>
+								<td>{reminder.type}</td>
+								<td>
+									<strong>{reminder.travellerName}</strong>
+									<span>{reminder.travellerEmail}</span>
+								</td>
+								<td>
+									{reminder.origin} <span className="route-arrow">→</span>{" "}
+									{reminder.destination}
+								</td>
+								<td>
+									<span className={statusClass(reminder.status)}>
+										{reminder.status}
+									</span>
+								</td>
+							</tr>
+						))}
+						{reports.next30Days.reminders.length === 0 && (
+							<EmptyRow
+								colSpan={5}
+								message="No reminders are scheduled in the next 30 days."
+							/>
+						)}
+					</tbody>
+				</table>
+			</div>
+		</section>
+	);
+}
+
+function ReminderReportCard({
+	label,
+	report,
+}: {
+	label: string;
+	report: DashboardData["reminderReports"]["currentMonth"];
+}) {
+	return (
+		<div className="reminder-report-card">
+			<div className="reminder-report-card-header">
+				<span>{label}</span>
+				<strong>{report.total}</strong>
+			</div>
+			<div className="reminder-report-card-meta">
+				<span>ADMIN {report.byType.ADMIN}</span>
+				<span>CLIENT {report.byType.CLIENT}</span>
+			</div>
+			<div className="reminder-report-statuses">
+				{Object.entries(report.byStatus).map(([status, count]) => (
+					<span key={status} className={statusClass(status)}>
+						{status} {count}
+					</span>
+				))}
+			</div>
+		</div>
 	);
 }
 
