@@ -9,6 +9,9 @@
 		"lint": "eslint",
 		"sync:sheet": "tsx scripts/sync-sheet.ts",
 		"process:reminders": "tsx scripts/process-reminders.ts",
+		"report:reminders:month": "tsx scripts/report-current-month-reminders.ts",
+		"report:reminders:week": "tsx scripts/report-one-week-reminders.ts",
+		"report:reminders:two-weeks": "tsx scripts/report-two-week-reminders.ts",
 		"postinstall": "prisma skills sync || exit 0"
 	},
 	"dependencies": {

@@ -1,5 +1,7 @@
 // lib/email/flight-reminder-template.ts
 
+type DateLike = Date | { toString(): string };
+
 export interface FlightReminderEmailData {
 	// Existing Traveller fields
 	clientName: string;
@@ -8,12 +10,12 @@ export interface FlightReminderEmailData {
 	// Existing Flight fields
 	origin: string;
 	destination: string;
-	departureAt: Date;
-	arrivalAt: Date;
+	departureAt: DateLike;
+	arrivalAt: DateLike;
 
 	layoverCity?: string | null;
-	layoverBeginsAt?: Date | null;
-	layoverEndsAt?: Date | null;
+	layoverBeginsAt?: DateLike | null;
+	layoverEndsAt?: DateLike | null;
 	layoverDuration?: string | null;
 
 	// Fields not currently available in our database.
@@ -25,6 +27,8 @@ export interface FlightReminderEmailData {
 	airlineLogoUrl?: string | null;
 	flightBannerImageUrl?: string | null;
 	manageBookingUrl?: string | null;
+	reminderType?: "ADMIN" | "CLIENT";
+	enableLiveCountdown?: boolean;
 }
 
 /**
@@ -33,7 +37,12 @@ export interface FlightReminderEmailData {
  * local/floating values. We deliberately use the stored Date
  * components instead of converting them to another timezone.
  */
-function formatDate(date: Date): string {
+function toDate(date: DateLike): Date {
+	return date instanceof Date ? date : new Date(date.toString());
+}
+
+function formatDate(value: DateLike): string {
+	const date = toDate(value);
 	const day = String(date.getUTCDate()).padStart(2, "0");
 	const month = String(date.getUTCMonth() + 1).padStart(2, "0");
 	const year = date.getUTCFullYear();
@@ -41,31 +50,35 @@ function formatDate(date: Date): string {
 	return `${day}/${month}/${year}`;
 }
 
-function formatTime(date: Date): string {
-	const hours = String(date.getUTCHours()).padStart(2, "0");
+function formatTime(value: DateLike): string {
+	const date = toDate(value);
+	const hour24 = date.getUTCHours();
+	const hours = hour24 % 12 || 12;
 	const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+	const period = hour24 >= 12 ? "PM" : "AM";
 
-	return `${hours}:${minutes}`;
+	return `${hours}:${minutes} ${period}`;
 }
 
-function formatDateAndTime(date: Date): string {
-	return `${formatDate(date)} at ${formatTime(date)}`;
+function formatDateAndTime(value: DateLike): string {
+	return `${formatDate(value)} at ${formatTime(value)}`;
 }
 
 /**
  * Calculates the number of days remaining while treating
  * the database date/time components as local values.
  */
-function getDaysUntilDeparture(departureAt: Date): number {
+function getDaysUntilDeparture(departureAt: DateLike): number {
 	const now = new Date();
+	const departure = toDate(departureAt);
 
 	const departureLocal = Date.UTC(
-		departureAt.getUTCFullYear(),
-		departureAt.getUTCMonth(),
-		departureAt.getUTCDate(),
-		departureAt.getUTCHours(),
-		departureAt.getUTCMinutes(),
-		departureAt.getUTCSeconds(),
+		departure.getUTCFullYear(),
+		departure.getUTCMonth(),
+		departure.getUTCDate(),
+		departure.getUTCHours(),
+		departure.getUTCMinutes(),
+		departure.getUTCSeconds(),
 	);
 
 	const nowLocal = Date.UTC(
@@ -80,6 +93,20 @@ function getDaysUntilDeparture(departureAt: Date): number {
 	const difference = departureLocal - nowLocal;
 
 	return Math.max(0, Math.ceil(difference / (1000 * 60 * 60 * 24)));
+}
+
+function formatCountdown(targetMilliseconds: number): string {
+	const remainingSeconds = Math.max(
+		0,
+		Math.floor((targetMilliseconds - Date.now()) / 1000),
+	);
+	const hours = Math.floor(remainingSeconds / 3600);
+	const minutes = Math.floor((remainingSeconds % 3600) / 60);
+	const seconds = remainingSeconds % 60;
+
+	return [hours, minutes, seconds]
+		.map((value) => String(value).padStart(2, "0"))
+		.join(":");
 }
 
 export function flightReminderTemplate(data: FlightReminderEmailData): string {
@@ -101,6 +128,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 		airlineLogoUrl,
 		flightBannerImageUrl,
 		manageBookingUrl,
+		reminderType = "CLIENT",
+		enableLiveCountdown,
 	} = data;
 
 	const daysUntilDeparture = getDaysUntilDeparture(departureAt);
@@ -117,6 +146,43 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 	const banner = flightBannerImageUrl || "{{FLIGHT_BANNER_IMAGE_URL}}";
 
 	const manageUrl = manageBookingUrl || "{{MANAGE_BOOKING_URL}}";
+	const departureMilliseconds = toDate(departureAt).getTime();
+	const hourMilliseconds = 60 * 60 * 1000;
+	const countdown =
+		reminderType === "ADMIN"
+			? {
+					label: "48-hour admin reminder",
+					target: departureMilliseconds - 48 * hourMilliseconds,
+				}
+			: {
+					label: "24-hour client reminder",
+					target: departureMilliseconds - 24 * hourMilliseconds,
+				};
+	const countdownScript = enableLiveCountdown
+		? `
+<script>
+  (() => {
+    const countdowns = document.querySelectorAll("[data-countdown-target]");
+
+    const updateCountdowns = () => {
+      const now = Date.now();
+
+      countdowns.forEach((element) => {
+        const target = Number(element.getAttribute("data-countdown-target"));
+        const remainingSeconds = Math.max(0, Math.floor((target - now) / 1000));
+        const hours = String(Math.floor(remainingSeconds / 3600)).padStart(2, "0");
+        const minutes = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, "0");
+        const seconds = String(remainingSeconds % 60).padStart(2, "0");
+        element.textContent = hours + ":" + minutes + ":" + seconds;
+      });
+    };
+
+    updateCountdowns();
+    window.setInterval(updateCountdowns, 1000);
+  })();
+</script>
+`
+		: "";
 
 	const layoverSection = layoverCity
 		? `
@@ -175,6 +241,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 <table
   role="presentation"
   width="100%"
+  max-width="900px"
   cellspacing="0"
   cellpadding="0"
   border="0"
@@ -194,7 +261,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
         cellpadding="0"
         border="0"
         style="
-          max-width:900px;
+          max-width:700px;
           background-color:#ffffff;
           margin:0 auto;
         "
@@ -217,9 +284,9 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                     src="${logo}"
                     alt="${displayAirline}"
                     style="
-                      max-width:320px;
+                      max-width:200px;
                       width:100%;
-                      height:auto;
+                      height:150px;
                       display:block;
                       margin:0 auto;
                     "
@@ -255,8 +322,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                     width="900"
                     style="
                       width:100%;
-                      max-width:900px;
-                      height:auto;
+                      // max-width:600px;
+                      height:200px;
                       display:block;
                     "
                   />
@@ -340,8 +407,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 
                   <div
                     style="
-                      background-color:#000000;
-                      color:#ffffff;
+                      background-color:#CECECE;
+                      color:#000000;
                       font-size:18px;
                       font-weight:700;
                       padding:9px 18px;
@@ -410,6 +477,50 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               of your upcoming flight and help you prepare
               for a smooth journey.
             </p>
+
+          </td>
+        </tr>
+
+
+        <!-- REMINDER COUNTDOWNS -->
+        <tr>
+          <td style="padding:10px 70px 20px 70px;">
+
+            <table
+              role="presentation"
+              width="100%"
+              cellspacing="0"
+              cellpadding="0"
+              border="0"
+              style="background-color:#f4f8f5; border-left:4px solid #008c45;"
+            >
+              <tr>
+                <td style="padding:18px 20px 8px 20px;">
+                  <strong style="font-size:18px; color:#222222;">Reminder countdown</strong>
+                </td>
+                <td
+                  align="right"
+                  valign="top"
+                  style="padding:15px 20px 0 10px; font-size:28px; line-height:1;"
+                  aria-label="Clock"
+                >
+                  &#128336;
+                </td>
+              </tr>
+              ${`
+              <tr>
+                <td colspan="2" style="padding:5px 20px 15px 20px;">
+                  <span style="display:block; color:#65736d; font-size:13px;">${countdown.label}</span>
+                  <strong
+                    data-countdown-target="${countdown.target}"
+                    style="display:block; margin-top:3px; color:#008c45; font-size:26px; letter-spacing:2px;"
+                  >
+                    ${formatCountdown(countdown.target)}
+                  </strong>
+                </td>
+              </tr>
+            `}
+            </table>
 
           </td>
         </tr>
@@ -547,7 +658,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               target="_blank"
               style="
                 display:inline-block;
-                background-color:#008c45;
+                background-color:#CAA001;
                 color:#ffffff;
                 text-decoration:none;
                 font-size:18px;
@@ -594,6 +705,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
   </tr>
 </table>
 
+${countdownScript}
 </body>
 </html>
   `.trim();

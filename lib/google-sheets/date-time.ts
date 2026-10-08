@@ -7,6 +7,19 @@ export function parse12HourTime(
 		return null;
 	}
 
+	const twentyFourHourMatch = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
+
+	if (twentyFourHourMatch) {
+		const hours = Number(twentyFourHourMatch[1]);
+		const minutes = Number(twentyFourHourMatch[2]);
+
+		if (hours > 23 || minutes > 59) {
+			return null;
+		}
+
+		return { hours, minutes };
+	}
+
 	const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(trimmed);
 
 	if (!match) {
@@ -31,6 +44,25 @@ export function parseSheetDate(value: string): Date | null {
 
 	if (!trimmed) {
 		return null;
+	}
+
+	const numericMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed);
+
+	if (numericMatch) {
+		const day = Number(numericMatch[1]);
+		const month = Number(numericMatch[2]) - 1;
+		const year = Number(numericMatch[3]);
+		const date = new Date(year, month, day);
+
+		if (
+			date.getFullYear() !== year ||
+			date.getMonth() !== month ||
+			date.getDate() !== day
+		) {
+			return null;
+		}
+
+		return date;
 	}
 
 	const match = /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/.exec(trimmed);

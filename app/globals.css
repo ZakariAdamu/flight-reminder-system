@@ -199,6 +199,72 @@ h1 {
   padding-top: 16px;
 }
 
+.reminder-reports {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  margin-bottom: 42px;
+}
+
+.reminder-reports-header {
+  padding: 26px 24px 0;
+}
+
+.reminder-reports h2 {
+  font-size: 28px;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+
+.reminder-report-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 24px;
+}
+
+.reminder-report-card {
+  background: #f6f8f5;
+  border: 1px solid var(--line);
+  padding: 18px;
+}
+
+.reminder-report-card-header,
+.reminder-report-card-meta,
+.reminder-report-statuses {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.reminder-report-card-header span,
+.reminder-report-card-meta {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.reminder-report-card-header strong {
+  color: var(--green);
+  font-size: 34px;
+  letter-spacing: -.05em;
+  line-height: 1;
+}
+
+.reminder-report-card-meta {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.reminder-report-statuses {
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.reminder-report-table {
+  min-width: 860px;
+}
+
 .metric {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -511,6 +577,15 @@ td span,
 
   .upcoming-reminder {
     padding: 22px 16px;
+  }
+
+  .reminder-reports-header {
+    padding: 22px 16px 0;
+  }
+
+  .reminder-report-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
   .upcoming-header {

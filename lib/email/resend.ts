@@ -17,6 +17,11 @@ function requiredEnv(name: string): string {
 	return value;
 }
 
+function optionalEnv(name: string): string | undefined {
+	const value = process.env[name]?.trim();
+	return value || undefined;
+}
+
 function emailList(name: string): string[] {
 	return requiredEnv(name)
 		.split(",")
@@ -72,6 +77,11 @@ function reminderContent(reminder: ReminderToSend) {
 			layoverBeginsAt: reminder.layoverBeginsAt,
 			layoverEndsAt: reminder.layoverEndsAt,
 			layoverDuration: reminder.layoverDuration,
+			airlineName: optionalEnv("AIRLINE_NAME"),
+			airlineLogoUrl: optionalEnv("EMAIL_LOGO_URL"),
+			flightBannerImageUrl: optionalEnv("EMAIL_BANNER_IMAGE_URL"),
+			manageBookingUrl: optionalEnv("MANAGE_BOOKING_URL"),
+			reminderType: reminder.type,
 		}),
 	};
 }

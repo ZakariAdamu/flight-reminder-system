@@ -52,6 +52,19 @@ Run synchronization with `pnpm sync:sheet`. The reminder sender command,
 `pnpm process:reminders`, synchronizes first and only sends reminders if that
 sync succeeds, then updates the database and Sheet after each send.
 
+Reminder reporting commands are read-only:
+
+```bash
+pnpm report:reminders:month
+pnpm report:reminders:week
+pnpm report:reminders:two-weeks
+```
+
+The first reports all reminders scheduled in the current UTC calendar month.
+The second reports the next 7 days. The third reports days 8 through 14 from
+today, so the one-week and two-week reports do not overlap. Each command
+prints totals, ADMIN/CLIENT counts, status counts, and reminder details.
+
 The local command processes one cycle. Production uses the authenticated
 `/api/cron/reminders` route, invoked by Vercel every two hours.
 

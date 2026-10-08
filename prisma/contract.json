@@ -651,6 +651,13 @@
                   "kind": "scalar"
                 }
               },
+              "sheetNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -707,6 +714,9 @@
                 },
                 "name": {
                   "column": "name"
+                },
+                "sheetNumber": {
+                  "column": "sheetNumber"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1159,6 +1169,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "sheetNumber": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -1166,7 +1181,16 @@
                 }
               },
               "foreignKeys": [],
-              "indexes": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "email"
+                  ],
+                  "name": "traveller_email_idx_46df9cad",
+                  "prefix": "traveller_email_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -1175,7 +1199,9 @@
               "uniques": [
                 {
                   "columns": [
-                    "email"
+                    "name",
+                    "email",
+                    "sheetNumber"
                   ]
                 }
               ]
@@ -1224,7 +1250,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4a9ea83b4267d6eea3e1bce88ac21baac2c031550452c9e90ef30ea7c10ffbfe"
+    "storageHash": "bae056b1fc3e9308fab82d158d102402e3636f2d4e18a0987bb0a830c0a4a01c"
   },
   "execution": {
     "executionHash": "96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1",

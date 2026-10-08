@@ -34,15 +34,19 @@ enum AuditEventType {
 }
 
 model Traveller {
-  id        String               @id @default(uuid())
-  name      String
-  location  String?
-  email     String               @unique
-  createdAt DateTime             @default(now())
-  updatedAt temporal.updatedAt()
+  id          String               @id @default(uuid())
+  name        String
+  location    String?
+  email       String
+  sheetNumber Int?
+  createdAt   DateTime             @default(now())
+  updatedAt   temporal.updatedAt()
 
-  flights   Flight[]
-  auditLogs AuditLog[]
+  flights     Flight[]
+  auditLogs   AuditLog[]
+
+  @@index([email])
+  @@unique([name, email, sheetNumber])
 }
 
 model Flight {

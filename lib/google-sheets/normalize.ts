@@ -2,6 +2,7 @@ import type { SheetRow } from "./mapping";
 
 export type NormalizedSheetRow = {
 	sheetRow: number;
+	sheetNumber: number | null;
 
 	name: string;
 	location: string;
@@ -35,6 +36,7 @@ export function normalizeSheetRow(
 ): NormalizedSheetRow {
 	return {
 		sheetRow,
+		sheetNumber: parseSheetNumber(value(row, "SN")),
 
 		name: value(row, "Name of  Clients") || value(row, "NAMES OF CLIENTS"),
 		location: value(row, "location"),
@@ -59,6 +61,15 @@ export function normalizeSheetRow(
 		flightStatus: value(row, "Flight Status") || value(row, "Status"),
 		reminderStatus: value(row, "Reminder Status"),
 	};
+}
+
+function parseSheetNumber(rawValue: string): number | null {
+	if (!/^\d+$/.test(rawValue)) {
+		return null;
+	}
+
+	const parsed = Number(rawValue);
+	return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
 export function normalizeSheetRows(
