@@ -52,12 +52,12 @@ export function parseSheetDate(value: string): Date | null {
 		const day = Number(numericMatch[1]);
 		const month = Number(numericMatch[2]) - 1;
 		const year = Number(numericMatch[3]);
-		const date = new Date(year, month, day);
+		const date = new Date(Date.UTC(year, month, day));
 
 		if (
-			date.getFullYear() !== year ||
-			date.getMonth() !== month ||
-			date.getDate() !== day
+			date.getUTCFullYear() !== year ||
+			date.getUTCMonth() !== month ||
+			date.getUTCDate() !== day
 		) {
 			return null;
 		}
@@ -93,12 +93,12 @@ export function parseSheetDate(value: string): Date | null {
 		return null;
 	}
 
-	const date = new Date(year, month, day);
+	const date = new Date(Date.UTC(year, month, day));
 
 	if (
-		date.getFullYear() !== year ||
-		date.getMonth() !== month ||
-		date.getDate() !== day
+		date.getUTCFullYear() !== year ||
+		date.getUTCMonth() !== month ||
+		date.getUTCDate() !== day
 	) {
 		return null;
 	}
@@ -117,7 +117,7 @@ export function combineSheetDateAndTime(
 		return null;
 	}
 
-	date.setHours(time.hours, time.minutes, 0, 0);
+	date.setUTCHours(time.hours, time.minutes, 0, 0);
 
 	return date;
 }
