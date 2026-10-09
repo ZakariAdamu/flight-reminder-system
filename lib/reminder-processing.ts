@@ -16,6 +16,8 @@ const now = (): Temporal.Instant =>
 const retryDelayMinutes = (attemptCount: number): number =>
 	Math.min(60, 2 ** Math.max(0, attemptCount - 1));
 
+type ReminderDate = Date | Temporal.Instant;
+
 export type ReminderToSend = {
 	id: string;
 	reminderId: string;
@@ -26,11 +28,11 @@ export type ReminderToSend = {
 	travellerEmail: string;
 	origin: string;
 	destination: string;
-	departureAt: Date;
-	arrivalAt: Date | null;
+	departureAt: ReminderDate;
+	arrivalAt: ReminderDate | null;
 	layoverCity: string | null;
-	layoverBeginsAt: Date | null;
-	layoverEndsAt: Date | null;
+	layoverBeginsAt: ReminderDate | null;
+	layoverEndsAt: ReminderDate | null;
 	layoverDuration: string | null;
 };
 
@@ -102,6 +104,7 @@ async function loadReminderContext(candidate: ReminderCandidate): Promise<{
 async function markSkipped(
 	candidate: ReminderCandidate,
 	context: { flight: FlightRecord; traveller: TravellerRecord },
+	reason: string,
 ): Promise<boolean> {
 	const timestamp = now();
 	const skipped = await db.orm.public.Reminder.where({
@@ -109,7 +112,7 @@ async function markSkipped(
 		status: candidate.status,
 	}).update({
 		status: "SKIPPED",
-		errorMessage: "Flight is cancelled in Google Sheets.",
+		errorMessage: reason,
 		updatedAt: timestamp,
 	});
 
@@ -122,7 +125,7 @@ async function markSkipped(
 		travellerId: context.traveller.id,
 		reminderId: candidate.id,
 		eventType: "REMINDER_CANCELLED",
-		message: `${candidate.type} reminder skipped because the flight is cancelled.`,
+		message: `${candidate.type} reminder skipped: ${reason}`,
 		metadata: null,
 		createdAt: timestamp,
 	});
@@ -250,7 +253,13 @@ export async function processDueReminders(
 		}
 
 		if (sheetState.flightStatus.trim().toLowerCase() === "cancelled") {
-			if (await markSkipped(candidate, context)) {
+			if (
+				await markSkipped(
+					candidate,
+					context,
+					"Flight is cancelled in Google Sheets.",
+				)
+			) {
 				skipped += 1;
 				try {
 					await updateSheetReminderStatus(
@@ -262,6 +271,37 @@ export async function processDueReminders(
 					sheetStatusFailures += 1;
 					console.error(
 						"Could not write skipped status to Google Sheets:",
+						error,
+					);
+				}
+			}
+			continue;
+		}
+
+		if (
+			Temporal.Instant.compare(
+				Temporal.Instant.from(context.flight.departureAt),
+				at,
+			) <= 0
+		) {
+			if (
+				await markSkipped(
+					candidate,
+					context,
+					"Flight departure has already passed.",
+				)
+			) {
+				skipped += 1;
+				try {
+					await updateSheetReminderStatus(
+						context.flight.sheetRow,
+						candidate.type,
+						"SKIPPED",
+					);
+				} catch (error) {
+					sheetStatusFailures += 1;
+					console.error(
+						"Could not write expired status to Google Sheets:",
 						error,
 					);
 				}
