@@ -25,6 +25,10 @@ if (!sheetName) {
 
 const auth = new google.auth.GoogleAuth({
 	scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+	credentials: {
+		client_email: email,
+		private_key: privateKey,
+	},
 });
 
 const sheets = google.sheets({
