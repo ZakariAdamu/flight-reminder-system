@@ -8,6 +8,12 @@ import {
 
 const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 const sheetName = process.env.GOOGLE_SHEETS_SHEET_NAME;
+const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+if (!email || !privateKey) {
+	throw new Error("Google service account credentials are missing");
+}
 
 if (!spreadsheetId) {
 	throw new Error("GOOGLE_SHEETS_SPREADSHEET_ID is not configured.");
@@ -19,6 +25,10 @@ if (!sheetName) {
 
 const auth = new google.auth.GoogleAuth({
 	scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+	credentials: {
+		client_email: email,
+		private_key: privateKey,
+	},
 });
 
 const sheets = google.sheets({
