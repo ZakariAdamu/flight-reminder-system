@@ -21,6 +21,7 @@ export type NormalizedSheetRow = {
 	layoverBegins: string;
 	layoverEnds: string;
 	layoverDuration: string;
+	flightNumber: string;
 
 	email: string;
 	flightStatus: string;
@@ -56,6 +57,7 @@ export function normalizeSheetRow(
 			value(row, "Layover Start Time") || value(row, "Layover Begins"),
 		layoverEnds: value(row, "Layover End Time") || value(row, "Layover Ends"),
 		layoverDuration: value(row, "Layover Duration"),
+		flightNumber: value(row, "Flight Number"),
 
 		email: value(row, "Client Email") || value(row, "Email Address"),
 		flightStatus: value(row, "Flight Status") || value(row, "Status"),

@@ -63,6 +63,7 @@ model Flight {
   layoverBeginsAt DateTime?
   layoverEndsAt   DateTime?
   layoverDuration String?
+  flightNumber    String?
 
   sheetRow        Int                  @unique
 

@@ -77,6 +77,7 @@ function reminderContent(reminder: ReminderToSend) {
 			layoverBeginsAt: reminder.layoverBeginsAt,
 			layoverEndsAt: reminder.layoverEndsAt,
 			layoverDuration: reminder.layoverDuration,
+			flightNumber: reminder.flightNumber,
 			airlineName: optionalEnv("AIRLINE_NAME"),
 			airlineLogoUrl: optionalEnv("EMAIL_LOGO_URL"),
 			flightBannerImageUrl: optionalEnv("EMAIL_BANNER_IMAGE_URL"),

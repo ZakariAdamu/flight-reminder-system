@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'bae056b1fc3e9308fab82d158d102402e3636f2d4e18a0987bb0a830c0a4a01c'>;
+  StorageHashBase<'ad769984163fb51b7ec0483ec233eb283a61fdee7fa622677de3575af35b1587'>;
 export type ExecutionHash =
   ExecutionHashBase<'96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1'>;
 export type ProfileHash =
@@ -275,6 +275,7 @@ export type FieldOutputTypes = {
       readonly layoverBeginsAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly layoverEndsAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly layoverDuration: CodecTypes['pg/text@1']['output'] | null;
+      readonly flightNumber: CodecTypes['pg/text@1']['output'] | null;
       readonly sheetRow: CodecTypes['pg/int4@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -341,6 +342,7 @@ export type FieldInputTypes = {
       readonly layoverBeginsAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly layoverEndsAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly layoverDuration: CodecTypes['pg/text@1']['input'] | null;
+      readonly flightNumber: CodecTypes['pg/text@1']['input'] | null;
       readonly sheetRow: CodecTypes['pg/int4@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -401,6 +403,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly departureAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly destination: CodecTypes['pg/text@1']['output'];
+      readonly flightNumber: CodecTypes['pg/text@1']['output'] | null;
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly layoverBeginsAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly layoverCity: CodecTypes['pg/text@1']['output'] | null;
@@ -467,6 +470,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly departureAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly destination: CodecTypes['pg/text@1']['input'];
+      readonly flightNumber: CodecTypes['pg/text@1']['input'] | null;
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly layoverBeginsAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly layoverCity: CodecTypes['pg/text@1']['input'] | null;
@@ -529,6 +533,7 @@ export namespace Models {
     layoverBeginsAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     layoverEndsAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     layoverDuration: CodecTypes['pg/text@1']['output'] | null;
+    flightNumber: CodecTypes['pg/text@1']['output'] | null;
     sheetRow: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -751,6 +756,11 @@ type ContractBase = Omit<
                   readonly nullable: true;
                 };
                 readonly layoverDuration: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly flightNumber: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
@@ -1141,6 +1151,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly flightNumber: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly sheetRow: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -1199,6 +1213,7 @@ type ContractBase = Omit<
                 readonly layoverBeginsAt: { readonly column: 'layoverBeginsAt' };
                 readonly layoverEndsAt: { readonly column: 'layoverEndsAt' };
                 readonly layoverDuration: { readonly column: 'layoverDuration' };
+                readonly flightNumber: { readonly column: 'flightNumber' };
                 readonly sheetRow: { readonly column: 'sheetRow' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };

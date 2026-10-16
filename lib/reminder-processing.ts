@@ -16,6 +16,11 @@ const now = (): Temporal.Instant =>
 const retryDelayMinutes = (attemptCount: number): number =>
 	Math.min(60, 2 ** Math.max(0, attemptCount - 1));
 
+const reminderWindowHours = {
+	ADMIN: { earliest: 32, latest: 48 },
+	CLIENT: { earliest: 14, latest: 24 },
+} as const;
+
 type ReminderDate = Date | Temporal.Instant;
 
 export type ReminderToSend = {
@@ -34,6 +39,7 @@ export type ReminderToSend = {
 	layoverBeginsAt: ReminderDate | null;
 	layoverEndsAt: ReminderDate | null;
 	layoverDuration: string | null;
+	flightNumber: string | null;
 };
 
 type ReminderCandidate = Awaited<ReturnType<typeof dueReminders>>[number];
@@ -49,18 +55,41 @@ export type ReminderSender = (
 ) => Promise<{ providerMessageId?: string }>;
 
 async function dueReminders(at: Temporal.Instant) {
-	const pending = await db.orm.public.Reminder.where({ status: "PENDING" })
-		.where((reminder) => reminder.scheduledFor.lte(at))
-		.limit(100)
-		.all();
+	const pending = await db.orm.public.Reminder.where({
+		status: "PENDING",
+	}).all();
 
 	const retryable = await db.orm.public.Reminder.where({ status: "FAILED" })
 		.where((reminder) => reminder.nextAttemptAt.isNotNull())
 		.where((reminder) => reminder.nextAttemptAt.lte(at))
-		.limit(100)
 		.all();
 
 	return [...pending, ...retryable];
+}
+
+function isReminderDue(
+	reminder: ReminderCandidate,
+	departureAt: ReminderDate,
+	at: Temporal.Instant,
+): boolean {
+	if (Temporal.Instant.compare(reminder.scheduledFor, at) <= 0) {
+		return true;
+	}
+
+	const departureInstant =
+		departureAt instanceof Date
+			? Temporal.Instant.fromEpochMilliseconds(departureAt.getTime())
+			: Temporal.Instant.from(departureAt);
+	const hoursUntilDeparture =
+		(Number(departureInstant.epochMilliseconds) -
+			Number(at.epochMilliseconds)) /
+		(60 * 60 * 1000);
+	const window = reminderWindowHours[reminder.type];
+
+	return (
+		hoursUntilDeparture > window.earliest &&
+		hoursUntilDeparture <= window.latest
+	);
 }
 
 async function recoverStaleProcessing(at: Temporal.Instant): Promise<void> {
@@ -199,6 +228,7 @@ async function claimReminder(
 		layoverBeginsAt: flight.layoverBeginsAt,
 		layoverEndsAt: flight.layoverEndsAt,
 		layoverDuration: flight.layoverDuration,
+		flightNumber: flight.flightNumber,
 	};
 }
 
@@ -306,6 +336,10 @@ export async function processDueReminders(
 					);
 				}
 			}
+			continue;
+		}
+
+		if (!isReminderDue(candidate, context.flight.departureAt, at)) {
 			continue;
 		}
 

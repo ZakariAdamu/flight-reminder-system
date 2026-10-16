@@ -276,6 +276,13 @@
                   "kind": "scalar"
                 }
               },
+              "flightNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -386,6 +393,9 @@
                 },
                 "destination": {
                   "column": "destination"
+                },
+                "flightNumber": {
+                  "column": "flightNumber"
                 },
                 "id": {
                   "column": "id"
@@ -893,6 +903,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "flightNumber": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -1250,7 +1265,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "bae056b1fc3e9308fab82d158d102402e3636f2d4e18a0987bb0a830c0a4a01c"
+    "storageHash": "ad769984163fb51b7ec0483ec233eb283a61fdee7fa622677de3575af35b1587"
   },
   "execution": {
     "executionHash": "96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1",

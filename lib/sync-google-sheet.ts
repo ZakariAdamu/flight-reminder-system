@@ -140,6 +140,7 @@ async function upsertFlight(row: NormalizedSheetRow, travellerId: string) {
 		layoverBeginsAt,
 		layoverEndsAt,
 		layoverDuration: row.layoverDuration || null,
+		flightNumber: row.flightNumber || null,
 		updatedAt: timestamp,
 	};
 
@@ -170,8 +171,26 @@ async function upsertReminder(
 	const timestamp = now();
 
 	if (existing) {
+		const scheduleChanged =
+			Temporal.Instant.compare(existing.scheduledFor, scheduledFor) !== 0;
+		const futureReminderMarkedSent =
+			existing.status === "SENT" &&
+			Temporal.Instant.compare(scheduledFor, timestamp) > 0;
+		const shouldReset = scheduleChanged || futureReminderMarkedSent;
+
 		await db.orm.public.Reminder.where({ reminderId }).update({
 			scheduledFor,
+			...(shouldReset
+				? {
+						status: "PENDING" as const,
+						attemptCount: 0,
+						sentAt: null,
+						failedAt: null,
+						nextAttemptAt: null,
+						errorMessage: null,
+						providerMessageId: null,
+					}
+				: {}),
 			updatedAt: timestamp,
 		});
 		return { id: existing.id, created: false };
