@@ -12,6 +12,7 @@ export const REQUIRED_SHEET_HEADERS = [
 	"Layover Start Time",
 	"Layover End Time",
 	"Layover Duration",
+	"Flight Number",
 	"Client Email",
 	"Flight Status",
 	"Reminder Status",

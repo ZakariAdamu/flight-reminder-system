@@ -44,6 +44,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 					flight.traveller.email,
 					flight.origin,
 					flight.destination,
+					flight.flightNumber ?? "",
 					String(flight.sheetRow),
 				]
 					.join(" ")
@@ -205,7 +206,10 @@ function UpcomingReminder({
 						{reminder.flight.origin} <span className="route-arrow">→</span>{" "}
 						{reminder.flight.destination}
 					</strong>
-					<small>Sheet row #{reminder.flight.sheetRow}</small>
+					<small>
+						{reminder.flight.flightNumber || "Flight number not set"} · Sheet
+						row #{reminder.flight.sheetRow}
+					</small>
 				</div>
 				<div>
 					<span className="detail-label">Attempts</span>
@@ -371,6 +375,7 @@ function TravellerView({ flights }: { flights: DashboardData["flights"] }) {
 									{flight.origin} <span className="route-arrow">→</span>{" "}
 									{flight.destination}
 								</strong>
+								<span>{flight.flightNumber || "Flight number not set"}</span>
 								<span>{flight.traveller.location ?? "Location not set"}</span>
 							</td>
 							<td>{formatDate(flight.departureAt)}</td>

@@ -119,6 +119,7 @@ export async function getDashboardData() {
 							arrivalAt: nextReminderFlight.arrivalAt
 								? serializeDate(nextReminderFlight.arrivalAt)
 								: null,
+							flightNumber: nextReminderFlight.flightNumber,
 							sheetRow: nextReminderFlight.sheetRow,
 						},
 					}
@@ -137,6 +138,7 @@ export async function getDashboardData() {
 			origin: flight.origin,
 			destination: flight.destination,
 			departureAt: serializeDate(flight.departureAt),
+			flightNumber: flight.flightNumber,
 			traveller: {
 				name: flight.traveller.name,
 				email: flight.traveller.email,

@@ -18,11 +18,7 @@ export interface FlightReminderEmailData {
 	layoverEndsAt?: DateLike | null;
 	layoverDuration?: string | null;
 
-	// Fields not currently available in our database.
-	// These remain optional placeholders until we add them.
 	flightNumber?: string | null;
-	bookingReference?: string | null;
-	bookingDate?: string | null;
 	airlineName?: string | null;
 	airlineLogoUrl?: string | null;
 	flightBannerImageUrl?: string | null;
@@ -122,8 +118,6 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 		layoverDuration,
 
 		flightNumber,
-		bookingReference,
-		bookingDate,
 		airlineName,
 		airlineLogoUrl,
 		flightBannerImageUrl,
@@ -136,10 +130,6 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 
 	const displayAirline = airlineName || "{{AIRLINE_NAME}}";
 	const displayFlightNumber = flightNumber || "{{FLIGHT_NUMBER}}";
-
-	const displayBookingReference = bookingReference || "{{BOOKING_REFERENCE}}";
-
-	const displayBookingDate = bookingDate || "{{BOOKING_DATE}}";
 
 	const logo = airlineLogoUrl || "{{AIRLINE_LOGO_URL}}";
 
@@ -353,7 +343,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                 <td
                   valign="top"
                   style="
-                    width:55%;
+                    width:100%;
                     padding-right:20px;
                   "
                 >
@@ -387,51 +377,6 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 
                 </td>
 
-
-                <!-- RIGHT -->
-                <td
-                  valign="top"
-                  align="right"
-                  style="width:45%;"
-                >
-
-                  <p
-                    style="
-                      margin:0 0 8px 0;
-                      font-size:17px;
-                      color:#555555;
-                    "
-                  >
-                    Booking ref:
-                  </p>
-
-                  <div
-                    style="
-                      background-color:#CECECE;
-                      color:#000000;
-                      font-size:18px;
-                      font-weight:700;
-                      padding:9px 18px;
-                      border-radius:3px;
-                      display:inline-block;
-                      min-width:150px;
-                      text-align:center;
-                    "
-                  >
-                    ${displayBookingReference}
-                  </div>
-
-                  <p
-                    style="
-                      margin:10px 0 0 0;
-                      font-size:16px;
-                      color:#555555;
-                    "
-                  >
-                    Booked on ${displayBookingDate}
-                  </p>
-
-                </td>
 
               </tr>
 

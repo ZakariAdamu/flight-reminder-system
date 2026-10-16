@@ -26,6 +26,7 @@ const EmailReminderTemplate = async () => {
 		layoverBeginsAt: flight.layoverBeginsAt,
 		layoverEndsAt: flight.layoverEndsAt,
 		layoverDuration: flight.layoverDuration,
+		flightNumber: flight.flightNumber,
 		airlineName: process.env.AIRLINE_NAME,
 		airlineLogoUrl: process.env.EMAIL_LOGO_URL,
 		flightBannerImageUrl: process.env.EMAIL_BANNER_IMAGE_URL,
