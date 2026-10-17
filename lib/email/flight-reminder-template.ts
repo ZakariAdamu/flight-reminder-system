@@ -421,6 +421,14 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               We wanted to remind you of the details
               of your upcoming flight and help you prepare
               for a smooth journey.
+              </br>
+              </br>
+              Kindly endeavour to be at the airport 3 to 5 hours before the flight departure time to enable you check-in in good time.
+              </br>
+              </br>
+              Please ensure that you have your valid passport, visa and your ticket (softcopy or hardcopy) with you.
+
+Have a safe trip.
             </p>
 
           </td>
@@ -509,8 +517,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                 </td>
               </tr>
 
-
-              <tr>
+<!-- The display Airline row is commented out below since it's not necessary for now. -->
+             <!-- <tr>
                 <td width="22" valign="top">•</td>
 
                 <td>
@@ -518,6 +526,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                   ${displayAirline}
                 </td>
               </tr>
+              -->
 
 
               <tr>
@@ -568,7 +577,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
         </tr>
 
 
-        <!-- MANAGE BOOKING MESSAGE -->
+        <!-- CONTACT US MESSAGE -->
         <tr>
           <td style="padding:20px 70px 10px 70px;">
 
@@ -583,7 +592,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               To make any changes to your booking or
               update your document details for faster
               check-in, please click on the
-              <strong>"Manage Booking"</strong>
+              <strong>"Contact Us"</strong>
               button below.
             </p>
 
@@ -591,7 +600,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
         </tr>
 
 
-        <!-- MANAGE BOOKING BUTTON -->
+
+        <!-- CONTACT US BUTTON -->
         <tr>
           <td
             align="center"
@@ -612,7 +622,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                 border-radius:3px;
               "
             >
-              Manage Booking
+              Contact Us
             </a>
 
           </td>
