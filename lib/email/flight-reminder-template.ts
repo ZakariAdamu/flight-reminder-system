@@ -64,7 +64,7 @@ function formatDateAndTime(value: DateLike): string {
  * Calculates the number of days remaining while treating
  * the database date/time components as local values.
  */
-function getDaysUntilDeparture(departureAt: DateLike): number {
+function getHoursUntilDeparture(departureAt: DateLike): number {
 	const now = new Date();
 	const departure = toDate(departureAt);
 
@@ -88,7 +88,7 @@ function getDaysUntilDeparture(departureAt: DateLike): number {
 
 	const difference = departureLocal - nowLocal;
 
-	return Math.max(0, Math.ceil(difference / (1000 * 60 * 60 * 24)));
+	return Math.max(0, Math.ceil(difference / (1000 * 60 * 60)));
 }
 
 function formatCountdown(targetMilliseconds: number): string {
@@ -126,7 +126,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 		enableLiveCountdown,
 	} = data;
 
-	const daysUntilDeparture = getDaysUntilDeparture(departureAt);
+	const hoursUntilDeparture = getHoursUntilDeparture(departureAt);
 
 	const displayAirline = airlineName || "{{AIRLINE_NAME}}";
 	const displayFlightNumber = flightNumber || "{{FLIGHT_NUMBER}}";
@@ -145,7 +145,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 					target: departureMilliseconds - 48 * hourMilliseconds,
 				}
 			: {
-					label: "24-hour client reminder",
+					label: "24-hour reminder",
 					target: departureMilliseconds - 24 * hourMilliseconds,
 				};
 	const countdownScript = enableLiveCountdown
@@ -312,7 +312,6 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                     width="900"
                     style="
                       width:100%;
-                      // max-width:600px;
                       height:200px;
                       display:block;
                     "
@@ -413,8 +412,8 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               ${destination}
               is just
               <strong>
-                ${daysUntilDeparture}
-                ${daysUntilDeparture === 1 ? "day" : "days"}
+                ${hoursUntilDeparture}
+                ${hoursUntilDeparture === 1 ? "hour" : "hours"}
                 away!
               </strong>
 
@@ -436,6 +435,7 @@ Have a safe trip.
 
 
         <!-- REMINDER COUNTDOWNS -->
+        <!-- 
         <tr>
           <td style="padding:10px 70px 20px 70px;">
 
@@ -477,6 +477,7 @@ Have a safe trip.
 
           </td>
         </tr>
+        -->
 
 
         <!-- FLIGHT DETAILS -->
@@ -488,7 +489,7 @@ Have a safe trip.
                 margin:0 0 18px 0;
                 font-size:20px;
                 color:#444444;
-                font-weight:500;
+                font-weight:600;
               "
             >
               Flight Details:
