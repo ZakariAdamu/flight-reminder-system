@@ -1,5 +1,6 @@
 import { db, ensureDatabaseConnection } from "./db";
 import { getSheetValues } from "./google-sheets";
+import { syncGoogleSheet } from "./sync-google-sheet";
 import {
 	isCancelledSheetRow,
 	isEmptySheetRow,
@@ -31,6 +32,7 @@ function reminderProcessTime(reminder: {
 
 export async function getDashboardData() {
 	await ensureDatabaseConnection();
+	await syncGoogleSheet(true);
 	const reportNow = new Date();
 
 	const [flights, auditLogs, sheetValues] = await Promise.all([
