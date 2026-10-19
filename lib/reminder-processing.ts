@@ -365,6 +365,8 @@ export async function processDueReminders(
 				failedAt: null,
 				errorMessage: null,
 				providerMessageId: result.providerMessageId ?? null,
+				providerStatus: "accepted",
+				providerEventAt: timestamp,
 				updatedAt: timestamp,
 			});
 

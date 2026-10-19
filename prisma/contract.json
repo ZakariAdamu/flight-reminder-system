@@ -480,7 +480,21 @@
                   "kind": "scalar"
                 }
               },
+              "providerEventAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
               "providerMessageId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "providerStatus": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
@@ -598,8 +612,14 @@
                 "nextAttemptAt": {
                   "column": "nextAttemptAt"
                 },
+                "providerEventAt": {
+                  "column": "providerEventAt"
+                },
                 "providerMessageId": {
                   "column": "providerMessageId"
+                },
+                "providerStatus": {
+                  "column": "providerStatus"
                 },
                 "reminderId": {
                   "column": "reminderId"
@@ -1053,7 +1073,17 @@
                   "nativeType": "timestamptz",
                   "nullable": true
                 },
+                "providerEventAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "providerMessageId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "providerStatus": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -1131,6 +1161,14 @@
                   ],
                   "name": "reminder_flightId_idx_7ef5148f",
                   "prefix": "reminder_flightId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "providerMessageId"
+                  ],
+                  "name": "reminder_providerMessageId_idx_6aba4afa",
+                  "prefix": "reminder_providerMessageId_idx",
                   "unique": false
                 }
               ],
@@ -1265,7 +1303,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ad769984163fb51b7ec0483ec233eb283a61fdee7fa622677de3575af35b1587"
+    "storageHash": "47b922f64f4dc6a5290b9d1d1488c73dc6bfb1b08e2b9021e2905a5a895c3627"
   },
   "execution": {
     "executionHash": "96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1",

@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'ad769984163fb51b7ec0483ec233eb283a61fdee7fa622677de3575af35b1587'>;
+  StorageHashBase<'47b922f64f4dc6a5290b9d1d1488c73dc6bfb1b08e2b9021e2905a5a895c3627'>;
 export type ExecutionHash =
   ExecutionHashBase<'96a4874a56e74708ef8b079d11c7002e9c9f76a0f7d35a1231973a094a878de1'>;
 export type ProfileHash =
@@ -293,6 +293,8 @@ export type FieldOutputTypes = {
       readonly nextAttemptAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly errorMessage: CodecTypes['pg/text@1']['output'] | null;
       readonly providerMessageId: CodecTypes['pg/text@1']['output'] | null;
+      readonly providerStatus: CodecTypes['pg/text@1']['output'] | null;
+      readonly providerEventAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -360,6 +362,8 @@ export type FieldInputTypes = {
       readonly nextAttemptAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly errorMessage: CodecTypes['pg/text@1']['input'] | null;
       readonly providerMessageId: CodecTypes['pg/text@1']['input'] | null;
+      readonly providerStatus: CodecTypes['pg/text@1']['input'] | null;
+      readonly providerEventAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -422,7 +426,9 @@ export type StorageColumnTypes = {
       readonly flightId: CodecTypes['pg/text@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly nextAttemptAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+      readonly providerEventAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly providerMessageId: CodecTypes['pg/text@1']['output'] | null;
+      readonly providerStatus: CodecTypes['pg/text@1']['output'] | null;
       readonly reminderId: CodecTypes['pg/text@1']['output'];
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
@@ -489,7 +495,9 @@ export type StorageColumnInputTypes = {
       readonly flightId: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly nextAttemptAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
+      readonly providerEventAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly providerMessageId: CodecTypes['pg/text@1']['input'] | null;
+      readonly providerStatus: CodecTypes['pg/text@1']['input'] | null;
       readonly reminderId: CodecTypes['pg/text@1']['input'];
       readonly scheduledFor: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly sentAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
@@ -554,6 +562,8 @@ export namespace Models {
     nextAttemptAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     errorMessage: CodecTypes['pg/text@1']['output'] | null;
     providerMessageId: CodecTypes['pg/text@1']['output'] | null;
+    providerStatus: CodecTypes['pg/text@1']['output'] | null;
+    providerEventAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     auditLogs: public_AuditLog[];
@@ -877,6 +887,16 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly providerStatus: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly providerEventAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: true;
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -895,6 +915,12 @@ type ContractBase = Omit<
                 { readonly columns: readonly ['flightId', 'type'] },
               ];
               indexes: readonly [
+                {
+                  readonly name: 'reminder_providerMessageId_idx_6aba4afa';
+                  readonly prefix: 'reminder_providerMessageId_idx';
+                  readonly columns: readonly ['providerMessageId'];
+                  readonly unique: false;
+                },
                 {
                   readonly name: 'reminder_flightId_idx_7ef5148f';
                   readonly prefix: 'reminder_flightId_idx';
@@ -1282,6 +1308,17 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly providerStatus: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly providerEventAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1338,6 +1375,8 @@ type ContractBase = Omit<
                 readonly nextAttemptAt: { readonly column: 'nextAttemptAt' };
                 readonly errorMessage: { readonly column: 'errorMessage' };
                 readonly providerMessageId: { readonly column: 'providerMessageId' };
+                readonly providerStatus: { readonly column: 'providerStatus' };
+                readonly providerEventAt: { readonly column: 'providerEventAt' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };

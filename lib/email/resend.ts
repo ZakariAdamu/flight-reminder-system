@@ -32,6 +32,7 @@ function emailList(name: string): string[] {
 async function sendEmail(input: {
 	to: string[];
 	bcc?: string[];
+	idempotencyKey?: string;
 	subject: string;
 	text: string;
 	html?: string;
@@ -41,6 +42,9 @@ async function sendEmail(input: {
 		headers: {
 			Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}`,
 			"Content-Type": "application/json",
+			...(input.idempotencyKey
+				? { "Idempotency-Key": input.idempotencyKey }
+				: {}),
 		},
 		body: JSON.stringify({
 			from: requiredEnv("EMAIL_FROM"),
@@ -94,6 +98,7 @@ export function createResendReminderSender(): ReminderSender {
 		const result = await sendEmail({
 			to: reminder.type === "ADMIN" ? admins : [reminder.travellerEmail],
 			bcc: reminder.type === "CLIENT" ? admins : undefined,
+			idempotencyKey: reminder.reminderId,
 			subject: content.subject,
 			text: content.text,
 			html: content.html,

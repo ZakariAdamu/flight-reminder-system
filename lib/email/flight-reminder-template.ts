@@ -312,7 +312,7 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
                     width="900"
                     style="
                       width:100%;
-                      height:200px;
+                      height:300px;
                       display:block;
                     "
                   />
@@ -419,15 +419,19 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
 
               We wanted to remind you of the details
               of your upcoming flight and help you prepare
-              for a smooth journey.
-              </br>
-              </br>
-              Kindly endeavour to be at the airport 3 to 5 hours before the flight departure time to enable you check-in in good time.
-              </br>
-              </br>
-              Please ensure that you have your valid passport, visa and your ticket (softcopy or hardcopy) with you.
-
+              for a smooth journey. </p>
+             
+              <p style="margin: 16px 0;">
+              
+              Kindly endeavour to be at the airport 4 hours before the flight departure time to enable you check-in in good time. 
+              
+              </p>
+              
+              
+              Please ensure that you have your valid passport, visa, ticket, and other required travel documents with you for a smooth travel experience.
+         <p style="margin: 16px 0;">
 Have a safe trip.
+</p>
             </p>
 
           </td>
@@ -585,16 +589,13 @@ Have a safe trip.
             <p
               style="
                 margin:0;
+                padding:0 16px;
                 font-size:16px;
                 line-height:1.6;
                 color:#555555;
               "
-            >
-              To make any changes to your booking or
-              update your document details for faster
-              check-in, please click on the
-              <strong>"Contact Us"</strong>
-              button below.
+            >             
+              For any questions or assistance regarding your upcoming flight, including travel documentation and check-in requirements, please click the <strong>"Contact Us"</strong> button below. Our team will be happy to assist you.
             </p>
 
           </td>
