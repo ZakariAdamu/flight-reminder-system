@@ -31,7 +31,7 @@ function emailList(name: string): string[] {
 
 async function sendEmail(input: {
 	to: string[];
-	cc?: string[];
+	bcc?: string[];
 	subject: string;
 	text: string;
 	html?: string;
@@ -45,7 +45,7 @@ async function sendEmail(input: {
 		body: JSON.stringify({
 			from: requiredEnv("EMAIL_FROM"),
 			to: input.to,
-			...(input.cc?.length ? { cc: input.cc } : {}),
+			...(input.bcc?.length ? { bcc: input.bcc } : {}),
 			subject: input.subject,
 			text: input.text,
 			...(input.html ? { html: input.html } : {}),
@@ -93,7 +93,7 @@ export function createResendReminderSender(): ReminderSender {
 		const content = reminderContent(reminder);
 		const result = await sendEmail({
 			to: reminder.type === "ADMIN" ? admins : [reminder.travellerEmail],
-			cc: reminder.type === "CLIENT" ? admins : undefined,
+			bcc: reminder.type === "CLIENT" ? admins : undefined,
 			subject: content.subject,
 			text: content.text,
 			html: content.html,

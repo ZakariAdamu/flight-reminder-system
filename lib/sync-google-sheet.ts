@@ -263,8 +263,10 @@ export type SyncSummary = {
 	remindersCreated: number;
 };
 
-export async function syncGoogleSheet(): Promise<SyncSummary> {
-	const values = await getSheetValues();
+export async function syncGoogleSheet(
+	forceRefresh = false,
+): Promise<SyncSummary> {
+	const values = await getSheetValues(forceRefresh);
 
 	if (values.length === 0) {
 		return {
