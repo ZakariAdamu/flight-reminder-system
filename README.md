@@ -33,6 +33,13 @@ two hours. Each run first synchronizes Google Sheets into PostgreSQL, then
 processes due reminders and updates both PostgreSQL and the Sheet after each
 send.
 
+Configure a Resend webhook for `https://<your-domain>/api/webhooks/resend` and
+subscribe to `email.sent`, `email.delivered`, `email.bounced`, and `email.failed`.
+Store the signing secret as `RESEND_WEBHOOK_SECRET` in the deployment
+environment. The webhook verifies Resend's signature, records the provider
+state, and updates the matching Sheet row. `SENT` means Resend accepted the
+request; delivery and bounce outcomes come from the webhook.
+
 The configured Google Sheet must contain these headers, including the separate
 status columns:
 
@@ -45,8 +52,10 @@ Reminder Status
 ````
 
 The Google credentials used by the deployment must have spreadsheet read/write
-access. `Reminder Status` is updated after processing, while cancellation is
-read from `Flight Status`.
+access. `Reminder Status` is updated after processing and provider webhook
+events, while cancellation is read from `Flight Status`. Reminder sends use the
+stable reminder ID as the Resend idempotency key, so retrying an ambiguous cron
+request does not create a duplicate provider message.
 
 Run synchronization with `pnpm sync:sheet`. The reminder sender command,
 `pnpm process:reminders`, synchronizes first and only sends reminders if that

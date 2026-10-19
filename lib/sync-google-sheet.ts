@@ -209,6 +209,8 @@ async function upsertReminder(
 		nextAttemptAt: null,
 		errorMessage: null,
 		providerMessageId: null,
+		providerStatus: null,
+		providerEventAt: null,
 		createdAt: timestamp,
 		updatedAt: timestamp,
 	});

@@ -90,6 +90,8 @@ model Reminder {
   nextAttemptAt     DateTime?
   errorMessage      String?
   providerMessageId String?
+  providerStatus    String?
+  providerEventAt   DateTime?
 
   createdAt         DateTime             @default(now())
   updatedAt         temporal.updatedAt()
@@ -98,6 +100,7 @@ model Reminder {
   auditLogs         AuditLog[]
 
   @@unique([flightId, type])
+  @@index([providerMessageId])
 }
 
 model AuditLog {

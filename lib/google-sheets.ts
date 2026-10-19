@@ -10,7 +10,7 @@ const GOOGLE_SHEET_CACHE_TTL_MS = 30_000;
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
 
-type ReminderStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
+type ReminderStatus = "PENDING" | "SENT" | "DELIVERED" | "FAILED" | "SKIPPED";
 
 type GoogleSheetConfig = {
 	spreadsheetId: string;
@@ -241,6 +241,7 @@ export async function updateSheetReminderStatuses(
 	const backgroundColors = {
 		PENDING: { red: 1, green: 0.95, blue: 0.65 },
 		SENT: { red: 0.72, green: 0.9, blue: 0.72 },
+		DELIVERED: { red: 0.55, green: 0.82, blue: 0.95 },
 		FAILED: { red: 1, green: 0.75, blue: 0.75 },
 		SKIPPED: { red: 0.85, green: 0.85, blue: 0.85 },
 	};
