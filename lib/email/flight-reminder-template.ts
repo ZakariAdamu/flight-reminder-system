@@ -421,20 +421,30 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
               of your upcoming flight and help you prepare
               for a smooth journey. </p>
              
-              <p style="margin: 16px 0;">
+              <p style="margin: 16px 0;
+              font-size:17px;
+                line-height:1.6;
+                color:#555555;">
               
-              Kindly endeavour to be at the airport 4 hours before the flight departure time to enable you check-in in good time. 
-              
+              Kindly endeavour to be at the airport 4 hours before the flight departure time to enable you check-in in good time.               
               </p>
               
               
-              Please ensure that you have your valid passport, visa, ticket, and other required travel documents with you for a smooth travel experience.
-         <p style="margin: 16px 0;">
-Have a safe trip.
+            <p style="margin: 16px 0;
+              font-size:17px;
+                line-height:1.6;
+                color:#555555;">
+              
+              Please ensure you have your valid passport, visa, ticket, and other required travel documents with you for a smooth check-in.
+              </p>
+         <p style="margin: 16px 0;
+              font-size:17px;
+                line-height:1.6;
+                color:#555555;">
+Do have a wonderful travel experience.
 </p>
-            </p>
 
-          </td>
+            </td>
         </tr>
 
 
@@ -595,7 +605,7 @@ Have a safe trip.
                 color:#555555;
               "
             >             
-              For any questions or assistance regarding your upcoming flight, including travel documentation and check-in requirements, please click the <strong>"Contact Us"</strong> button below. Our team will be happy to assist you.
+              For any questions or assistance regarding your flight, please click the <strong>"Contact Us"</strong> button below. Our team will be happy to assist you.
             </p>
 
           </td>
