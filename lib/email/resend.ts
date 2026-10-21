@@ -68,7 +68,7 @@ function reminderContent(reminder: ReminderToSend) {
 	const timing = reminder.type === "ADMIN" ? "48hrs" : "24hrs";
 
 	return {
-		subject: `${timing} flight reminder for ${reminder.travellerName}`,
+		subject: `${timing} Flight Reminder for ${reminder.travellerName}`,
 		text: `Hello ${reminder.travellerName},\n\nYour flight reminder is ready.`,
 		html: flightReminderTemplate({
 			clientName: reminder.travellerName,
