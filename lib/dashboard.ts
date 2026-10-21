@@ -79,7 +79,7 @@ export async function getDashboardData() {
 		nilBoundary === -1 ? allSheetRows : allSheetRows.slice(0, nilBoundary);
 	const sheetRecords = rowsToRecords(sheetHeaders, sheetRows);
 	const sheetRowsForDisplay = sheetRows.map((row) =>
-		sheetHeaders.map((_, index) => String(row[index] ?? "")),
+		sheetHeaders.map((_, columnIndex) => String(row[columnIndex] ?? "")),
 	);
 	const [monthStart, monthEnd] = currentMonthWindow(reportNow);
 	const [next30DaysStart, next30DaysEnd] = nextDaysWindow(reportNow, 0, 30);
@@ -122,7 +122,7 @@ export async function getDashboardData() {
 								? serializeDate(nextReminderFlight.arrivalAt)
 								: null,
 							flightNumber: nextReminderFlight.flightNumber,
-							sheetRow: nextReminderFlight.sheetRow,
+							serialNumber: nextReminderTraveller.sheetNumber,
 						},
 					}
 				: null,
@@ -136,7 +136,7 @@ export async function getDashboardData() {
 		},
 		flights: flights.map((flight) => ({
 			id: flight.id,
-			sheetRow: flight.sheetRow,
+			serialNumber: flight.traveller.sheetNumber,
 			origin: flight.origin,
 			destination: flight.destination,
 			departureAt: serializeDate(flight.departureAt),

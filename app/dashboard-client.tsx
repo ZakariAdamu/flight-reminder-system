@@ -13,6 +13,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 	hour: "2-digit",
 	minute: "2-digit",
 	hour12: true,
+	timeZone: "UTC",
 });
 
 function formatDate(value: string) {
@@ -45,7 +46,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 					flight.origin,
 					flight.destination,
 					flight.flightNumber ?? "",
-					String(flight.sheetRow),
+					String(flight.serialNumber ?? ""),
 				]
 					.join(" ")
 					.toLowerCase()
@@ -87,7 +88,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 							calculations.
 						</p>
 					</div>
-					<div className="sheet-counts" aria-label="Sheet row counts">
+					<div className="sheet-counts" aria-label="Record counts">
 						<span>{data.sheet.rows.length} rows</span>
 						<span>{data.sheet.emptyRows} empty</span>
 						<span>{data.sheet.cancelledRows} cancelled</span>
@@ -95,11 +96,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 				</div>
 				<div className="toolbar">
 					<label className="search-box">
-						<span className="sr-only">Search Sheet rows</span>
+						<span className="sr-only">Search records</span>
 						<input
 							value={search}
 							onChange={(event) => setSearch(event.target.value)}
-							placeholder="Search Sheet rows"
+							placeholder="Search records"
 						/>
 					</label>
 				</div>
@@ -207,8 +208,8 @@ function UpcomingReminder({
 						{reminder.flight.destination}
 					</strong>
 					<small>
-						{reminder.flight.flightNumber || "Flight number not set"} · Sheet
-						row #{reminder.flight.sheetRow}
+						{reminder.flight.flightNumber || "Flight number not set"} · Serial #
+						{reminder.flight.serialNumber ?? "Not set"}
 					</small>
 				</div>
 				<div>
@@ -251,6 +252,7 @@ function ReminderReports({
 				<table className="reminder-report-table">
 					<thead>
 						<tr>
+							<th>Serial number</th>
 							<th>Due</th>
 							<th>Type</th>
 							<th>Traveller</th>
@@ -261,6 +263,7 @@ function ReminderReports({
 					<tbody>
 						{reports.next30Days.reminders.map((reminder) => (
 							<tr key={reminder.id}>
+								<td>{reminder.serialNumber ?? "Not set"}</td>
 								<td>{formatDate(reminder.scheduledFor)}</td>
 								<td>{reminder.type}</td>
 								<td>
@@ -280,7 +283,7 @@ function ReminderReports({
 						))}
 						{reports.next30Days.reminders.length === 0 && (
 							<EmptyRow
-								colSpan={5}
+								colSpan={6}
 								message="No reminders are scheduled in the next 30 days."
 							/>
 						)}
@@ -341,7 +344,7 @@ function SheetView({ headers, rows }: { headers: string[]; rows: string[][] }) {
 					{rows.length === 0 && (
 						<EmptyRow
 							colSpan={Math.max(headers.length, 1)}
-							message="No Sheet rows match this search."
+							message="No records match this search."
 						/>
 					)}
 				</tbody>
@@ -360,7 +363,7 @@ function TravellerView({ flights }: { flights: DashboardData["flights"] }) {
 						<th>Route</th>
 						<th>Departure</th>
 						<th>Reminders</th>
-						<th>Sheet row</th>
+						<th>Serial number</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -391,7 +394,7 @@ function TravellerView({ flights }: { flights: DashboardData["flights"] }) {
 									))}
 								</div>
 							</td>
-							<td className="muted">#{flight.sheetRow}</td>
+							<td className="muted">#{flight.serialNumber ?? "Not set"}</td>
 						</tr>
 					))}
 					{flights.length === 0 && (

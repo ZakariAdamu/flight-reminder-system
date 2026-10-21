@@ -451,7 +451,7 @@ Do have a wonderful travel experience.
         <!-- REMINDER COUNTDOWNS -->
         <!-- 
         <tr>
-          <td style="padding:10px 70px 20px 70px;">
+          <td>
 
             <table
               role="presentation"
@@ -594,12 +594,12 @@ Do have a wonderful travel experience.
 
         <!-- CONTACT US MESSAGE -->
         <tr>
-          <td style="padding:20px 70px 10px 70px;">
+          <td>
 
             <p
               style="
                 margin:0;
-                padding:0 16px;
+                padding:20px 70px;
                 font-size:16px;
                 line-height:1.6;
                 color:#555555;
@@ -617,7 +617,7 @@ Do have a wonderful travel experience.
         <tr>
           <td
             align="center"
-            style="padding:25px 70px 45px 70px;"
+            style="padding:0 70px;"
           >
 
             <a
@@ -632,6 +632,8 @@ Do have a wonderful travel experience.
                 font-weight:700;
                 padding:17px 70px;
                 border-radius:3px;
+                margin-top:36px;
+                margin-bottom:36px;
               "
             >
               Contact Us
