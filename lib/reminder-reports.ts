@@ -13,7 +13,7 @@ export type ReminderReportItem = {
 	origin: string;
 	destination: string;
 	departureAt: string;
-	sheetRow: number;
+	serialNumber: number | null;
 };
 
 export type ReminderWindowReport = {
@@ -59,7 +59,7 @@ function toReportItem(
 		origin: flight.origin,
 		destination: flight.destination,
 		departureAt: serializeDate(flight.departureAt),
-		sheetRow: flight.sheetRow,
+		serialNumber: flight.traveller.sheetNumber,
 	};
 }
 
