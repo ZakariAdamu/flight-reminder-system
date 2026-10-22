@@ -410,12 +410,14 @@ export function flightReminderTemplate(data: FlightReminderEmailData): string {
             >
               Your trip to
               ${destination}
-              is just
+              is just hours away!
+              <!-- 
               <strong>
                 ${hoursUntilDeparture}
                 ${hoursUntilDeparture === 1 ? "hour" : "hours"}
                 away!
               </strong>
+              -->
 
               We wanted to remind you of the details
               of your upcoming flight and help you prepare
