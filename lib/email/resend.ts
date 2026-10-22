@@ -22,11 +22,15 @@ function optionalEnv(name: string): string | undefined {
 	return value || undefined;
 }
 
-function emailList(name: string): string[] {
-	return requiredEnv(name)
+function parseEmailList(value: string): string[] {
+	return value
 		.split(",")
 		.map((email) => email.trim())
 		.filter(Boolean);
+}
+
+function emailList(name: string): string[] {
+	return parseEmailList(requiredEnv(name));
 }
 
 async function sendEmail(input: {
@@ -96,7 +100,10 @@ export function createResendReminderSender(): ReminderSender {
 		const admins = emailList("ADMIN_EMAILS");
 		const content = reminderContent(reminder);
 		const result = await sendEmail({
-			to: reminder.type === "ADMIN" ? admins : [reminder.travellerEmail],
+			to:
+				reminder.type === "ADMIN"
+					? admins
+					: parseEmailList(reminder.travellerEmail),
 			bcc: reminder.type === "CLIENT" ? admins : undefined,
 			idempotencyKey: reminder.reminderId,
 			subject: content.subject,
